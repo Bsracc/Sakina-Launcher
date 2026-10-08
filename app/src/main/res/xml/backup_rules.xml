@@ -1,13 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?><!--
-   Sample backup rules file; uncomment and customize as necessary.
+   Auto-backup rules: the launcher configuration (main prefs + note panel) is
+   user data worth preserving across reinstall/device transfer.
    See https://developer.android.com/guide/topics/data/autobackup
-   for details.
-   Note: This file is ignored for devices older that API 31
-   See https://developer.android.com/about/versions/12/backup-restore
 -->
 <full-backup-content>
-    <!--
-   <include domain="sharedpref" path="."/>
-   <exclude domain="sharedpref" path="device.xml"/>
--->
+    <include domain="sharedpref" path="app.sakinalauncher.xml" />
+    <include domain="sharedpref" path="app.sakinalauncher.note_panel.xml" />
+    <include domain="sharedpref" path="app.sakinalauncher.muslim_center.xml" />
 </full-backup-content>

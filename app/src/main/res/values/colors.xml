@@ -26,10 +26,21 @@
     <color name="blackInverseTrans80">#CCFFFFFF</color>
     <color name="blackInverseTrans90">#E6FFFFFF</color>
 
+    <!--Destructive action ink. Chosen to hold ~4.5:1 on the light theme's black
+        ink surfaces; the dark theme carries a brighter variant (values-night).-->
+    <color name="dangerRed">#F22B3A</color>
+    <!-- Bright variant only referenced by values-night (dark ink). Values-night
+         already carries the base declaration for styles; add base here so lint
+         MissingDefaultResource passes for release builds. -->
+    <color name="dangerRedBright">#FF5C6C</color>
+
     <!--Dialog surface: near-opaque dark so content behind is not visible-->
     <color name="dialogSurfaceSolid">#F21A1A1A</color>
 
     <!--Settings dim scrim: darkens the wallpaper while the settings screen is open-->
     <color name="settingsDimScrim">#B3000000</color>
+
+    <!--Drawer sublabel ink for e-ink displays, where translucent tints smear-->
+    <color name="eink_text">#8C8C8C</color>
 
 </resources>

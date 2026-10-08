@@ -236,8 +236,8 @@ class NotePanelStore(context: Context) {
 
     companion object {
         private const val PREFS_FILENAME = "app.sakinalauncher.note_panel"
-        private const val KEY_NOTES = "NOTE_PANEL_NOTES"
-        private const val KEY_TODOS = "NOTE_PANEL_TODOS"
+        const val KEY_NOTES = "NOTE_PANEL_NOTES"
+        const val KEY_TODOS = "NOTE_PANEL_TODOS"
     }
 }
 

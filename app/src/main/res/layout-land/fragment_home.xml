@@ -83,13 +83,32 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="end"
-        android:layout_marginHorizontal="74dp"
+        android:layout_marginHorizontal="64dp"
         android:layout_marginTop="72dp"
         android:gravity="center"
         android:padding="10dp"
         android:textSize="@dimen/date_size"
         android:visibility="gone"
         tools:text="2h 11m"
+        tools:visibility="visible" />
+
+    <!-- Daily screen-time goal progress (B2). Margin/padding set at runtime in
+         HomeFragment.populateScreenTime(), so the values here are only defaults
+         (tools:text is preview-only); keep them aligned with tvScreenTime. -->
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/tvScreenTimeGoal"
+        style="@style/TextHomeMeta"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end"
+        android:layout_marginHorizontal="64dp"
+        android:layout_marginTop="108dp"
+        android:gravity="center"
+        android:paddingHorizontal="10dp"
+        android:paddingBottom="4dp"
+        android:textSize="@dimen/date_size"
+        android:visibility="gone"
+        tools:text="1h 20m of 2h"
         tools:visibility="visible" />
 
     <!-- Home apps-->
@@ -187,6 +206,28 @@
             android:hint="@string/app"
             android:paddingVertical="@dimen/home_app_padding_vertical"
             android:tag="@string/tag_8"
+            android:visibility="gone"
+            tools:visibility="visible" />
+
+        <TextView
+            android:id="@+id/homeApp9"
+            style="@style/TextHomeLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:hint="@string/app"
+            android:paddingVertical="@dimen/home_app_padding_vertical"
+            android:tag="@string/tag_9"
+            android:visibility="gone"
+            tools:visibility="visible" />
+
+        <TextView
+            android:id="@+id/homeApp10"
+            style="@style/TextHomeLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:hint="@string/app"
+            android:paddingVertical="@dimen/home_app_padding_vertical"
+            android:tag="@string/tag_10"
             android:visibility="gone"
             tools:visibility="visible" />
 

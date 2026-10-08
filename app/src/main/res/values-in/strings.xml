@@ -160,10 +160,10 @@
     <string name="productive_dialog_width">Lebar dialog</string>
     <string name="productive_dialog_width_preview">Lebar dialog: %1$d%%</string>
     <string name="productive_keep_one_widget">Biarkan minimal satu modul aktif</string>
-    <string name="dialog_width_70">70% — sempit</string>
-    <string name="dialog_width_80">80% — sedang</string>
-    <string name="dialog_width_90">90% — lebar</string>
-    <string name="dialog_width_100">100% — penuh</string>
+    <string name="dialog_width_70">70% (sempit)</string>
+    <string name="dialog_width_80">80% (sedang)</string>
+    <string name="dialog_width_90">90% (lebar)</string>
+    <string name="dialog_width_100">100% (penuh)</string>
     <string name="muslim_center">Pusat Muslim</string>
     <string name="prayer_times">Waktu shalat</string>
     <string name="next_prayer">Shalat berikutnya</string>
@@ -207,4 +207,48 @@
     <string name="language">Bahasa</string>
     <string name="language_english">Inggris</string>
     <string name="language_indonesian">Indonesia</string>
+
+    <!-- B1: Peluncuran mindful -->
+    <string name="mindful_launch">Peluncuran mindful</string>
+    <string name="mindful_launch_summary">Beri jeda sebelum membuka aplikasi yang Anda tandai sebagai pengalih perhatian, agar Anda bisa berubah pikiran.</string>
+    <string name="mindful_launch_master_toggle">Peluncuran mindful</string>
+    <string name="mindful_launch_delay">Lama hitung mundur</string>
+    <string name="mindful_launch_delay_3">3 detik</string>
+    <string name="mindful_launch_delay_4">4 detik</string>
+    <string name="mindful_launch_delay_5">5 detik</string>
+    <string name="mindful_launch_delay_preview">Hitung mundur: %1$d detik</string>
+    <string name="mindful_launch_opt_in">Jeda sebelum membuka</string>
+    <string name="mindful_launch_opt_in_add">Tambahkan aplikasi untuk dijeda sebelum dibuka</string>
+    <string name="mindful_launch_opt_in_empty">Belum ada aplikasi yang ditandai.\n\nTekan lama aplikasi apa pun di daftar aplikasi lalu pilih “Jeda sebelum membuka” untuk menandainya.</string>
+    <string name="mindful_launch_hint">Segera dibuka. Tarik napas. Anda masih bisa membatalkan.</string>
+    <string name="mindful_cancel">Batalkan peluncuran</string>
+    <string name="mindful_cancel_action">Batal</string>
+    <string name="mindful_launch_cancelled">Peluncuran dibatalkan</string>
+    <string name="mindful_on">Menjeda</string>
+    <string name="mindful_added">Akan dijeda sebelum dibuka</string>
+    <string name="mindful_removed">Tidak lagi dijeda</string>
+
+    <!-- B2: Target waktu layar harian -->
+    <string name="screen_time_goal">Target waktu layar harian</string>
+    <string name="screen_time_goal_summary">Tetapkan batas harian dan dapatkan pengingat saat Anda mencapainya.</string>
+    <string name="screen_time_goal_target">Target harian</string>
+    <string name="screen_time_goal_off">Mati</string>
+    <string name="screen_time_goal_set">Tetapkan target</string>
+    <string name="screen_time_goal_progress">Kemajuan target: %1$s dari %2$s</string>
+    <string name="screen_time_goal_reached_title">Target waktu layar harian tercapai</string>
+    <string name="screen_time_goal_reached_text">Anda telah menggunakan %1$s hari ini, %2$s dari target Anda. Saatnya istirahat?</string>
+    <string name="screen_time_goal_missed_title">Target waktu layar harian terlewat</string>
+    <string name="screen_time_goal_missed_text">Anda tidak mencapai target %1$s hari ini. Besok adalah hari baru.</string>
+    <string name="screen_time_goal_channel">Target waktu layar</string>
+
+    <!-- C2: Export / import configuration -->
+    <string name="backup_restore">Cadangkan &amp; pulihkan</string>
+    <string name="export_config">Ekspor pengaturan</string>
+    <string name="import_config">Impor pengaturan</string>
+    <string name="export_config_done">Pengaturan berhasil diekspor</string>
+    <string name="import_config_done">Pengaturan berhasil diimpor</string>
+    <string name="import_config_invalid">File tersebut bukan cadangan Sakinah Launcher yang valid</string>
+    <string name="import_config_confirm_title">Impor pengaturan?</string>
+    <string name="import_config_confirm_message">Ini akan mengganti pengaturan, catatan, dan to-do Anda saat ini dengan isi file cadangan.</string>
+    <string name="import_config_confirm_import">Impor</string>
 </resources><!-- Indonesian -->

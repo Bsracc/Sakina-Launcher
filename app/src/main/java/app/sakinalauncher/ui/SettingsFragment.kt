@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Process
@@ -20,6 +21,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.addCallback
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.bundleOf
 import androidx.core.os.LocaleListCompat
@@ -32,6 +34,7 @@ import app.sakinalauncher.BuildConfig
 import app.sakinalauncher.MainActivity
 import app.sakinalauncher.MainViewModel
 import app.sakinalauncher.R
+import app.sakinalauncher.data.ConfigBackup
 import app.sakinalauncher.data.Constants
 import app.sakinalauncher.data.NotePanelMode
 import app.sakinalauncher.data.Prefs
@@ -43,6 +46,7 @@ import app.sakinalauncher.data.muslim.PrayerTimeRepository
 import app.sakinalauncher.data.muslim.PrayerTimeStore
 import app.sakinalauncher.databinding.FragmentSettingsBinding
 import app.sakinalauncher.helper.AppDialog
+import app.sakinalauncher.helper.ScreenTimeGoal
 import app.sakinalauncher.helper.addSystemBarInsetsPadding
 import app.sakinalauncher.helper.animateAlpha
 import app.sakinalauncher.helper.appUsagePermissionGranted
@@ -58,7 +62,11 @@ import app.sakinalauncher.helper.PrayerLocationHelper
 import app.sakinalauncher.helper.showAppListDialog
 import app.sakinalauncher.helper.showToast
 import app.sakinalauncher.listener.DeviceAdmin
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.BufferedReader
+import java.io.InputStreamReader
 import java.util.Locale
 
 class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListener {
@@ -70,6 +78,32 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
     private lateinit var deviceManager: DevicePolicyManager
     private lateinit var componentName: ComponentName
     private var cachedKemenagCities: List<PrayerCity>? = null
+
+    private val exportLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            val uri = result.data?.data ?: return@registerForActivityResult
+            if (result.resultCode != android.app.Activity.RESULT_OK) return@registerForActivityResult
+            lifecycleScope.launch {
+                val ok = withContext(Dispatchers.IO) {
+                    runCatching {
+                        requireContext().contentResolver.openOutputStream(uri)?.use { stream ->
+                            stream.write(ConfigBackup(requireContext()).exportJson().toByteArray())
+                        } != null
+                    }.getOrDefault(false)
+                }
+                if (isAdded) {
+                    if (ok) requireContext().showToast(R.string.export_config_done)
+                    else requireContext().showToast(R.string.import_config_invalid)
+                }
+            }
+        }
+
+    private val importLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            val uri = result.data?.data ?: return@registerForActivityResult
+            if (result.resultCode != android.app.Activity.RESULT_OK) return@registerForActivityResult
+            showImportConfirm(uri)
+        }
 
     private var _binding: FragmentSettingsBinding? = null
     private val binding get() = _binding!!
@@ -102,6 +136,8 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
         populateProMessage()
         populateKeyboardText()
         populateScreenTimeOnOff()
+        populateMindfulSettings()
+        populateScreenTimeGoal()
         populateLockSettings()
         populateHomeButtonRecents()
         populateWallpaperText()
@@ -153,46 +189,79 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
 
     override fun onClick(view: View) {
         binding.appsNumSelectLayout.visibility = View.GONE
+        binding.appsNumLabel.visibility = View.VISIBLE
+        binding.homeAppsNum.visibility = View.VISIBLE
         binding.dateTimeSelectLayout.visibility = View.GONE
         binding.appThemeSelectLayout.visibility = View.GONE
         binding.swipeDownSelectLayout.visibility = View.GONE
+        // Expanding picker grids replace the row they sit in (FrameLayout stacking):
+        // the row label and value must go with them or the three layers overlap.
+        showDateTimeRow(true)
+        showThemeRow(true)
         if (view.id != R.id.textSizeMinus && view.id != R.id.textSizePlus) {
             if (binding.textSizesLayout.isVisible) {
                 binding.textSizesLayout.visibility = View.GONE
                 applyTextSizeScale()
             }
+            showTextSizeRow(true)
         }
         if (view.id != R.id.alignmentBottom)
             binding.alignmentSelectLayout.visibility = View.GONE
+        showAlignmentRow(true)
 
         when (view.id) {
             R.id.sakinaHiddenApps -> showHiddenApps()
             R.id.moreFeatures -> requireContext().openUrl("https://github.com/Bsraccc1/Sakina-Launcher")
             R.id.screenTimeOnOff -> viewModel.showDialog.postValue(Constants.Dialog.DIGITAL_WELLBEING)
+            R.id.mindfulLaunchToggle -> toggleMindfulLaunch()
+            R.id.mindfulLaunchDelay -> showMindfulDelayPicker()
+            R.id.mindfulAppsValue -> showMindfulAppsPicker()
+            R.id.screenTimeGoalValue -> showScreenTimeGoalPicker()
+            R.id.exportConfig -> exportConfig()
+            R.id.importConfig -> importConfig()
             R.id.appInfo -> openAppInfo(requireContext(), Process.myUserHandle(), BuildConfig.APPLICATION_ID)
             R.id.setLauncher -> viewModel.resetLauncherLiveData.call()
             R.id.toggleLock -> toggleLockMode()
             R.id.homeButtonRecents -> toggleHomeButtonRecents()
             R.id.autoShowKeyboard -> toggleKeyboardText()
-            R.id.homeAppsNum -> binding.appsNumSelectLayout.visibility = View.VISIBLE
+            R.id.homeAppsNum -> {
+                // The numbers grid expands into the same space the label and value
+                // occupy; hide them while it is open or the three render on top of
+                // each other (same pattern as the alignment/date-time/theme pickers).
+                binding.appsNumLabel.visibility = View.GONE
+                binding.homeAppsNum.visibility = View.GONE
+                binding.appsNumSelectLayout.visibility = View.VISIBLE
+            }
             R.id.dailyWallpaperUrl -> requireContext().openUrl(prefs.dailyWallpaperUrl)
             R.id.dailyWallpaper -> toggleDailyWallpaperUpdate()
             R.id.solidBackground -> toggleSolidBackground()
-            R.id.alignment -> binding.alignmentSelectLayout.visibility = View.VISIBLE
+            R.id.alignment -> {
+                binding.alignmentSelectLayout.visibility = View.VISIBLE
+                showAlignmentRow(false)
+            }
             R.id.alignmentLeft -> viewModel.updateHomeAlignment(Gravity.START)
             R.id.alignmentCenter -> viewModel.updateHomeAlignment(Gravity.CENTER)
             R.id.alignmentRight -> viewModel.updateHomeAlignment(Gravity.END)
             R.id.alignmentBottom -> updateHomeBottomAlignment()
             R.id.statusBar -> toggleStatusBar()
-            R.id.dateTime -> binding.dateTimeSelectLayout.visibility = View.VISIBLE
+            R.id.dateTime -> {
+                binding.dateTimeSelectLayout.visibility = View.VISIBLE
+                showDateTimeRow(false)
+            }
             R.id.dateTimeOn -> toggleDateTime(Constants.DateTime.ON)
             R.id.dateTimeOff -> toggleDateTime(Constants.DateTime.OFF)
             R.id.dateOnly -> toggleDateTime(Constants.DateTime.DATE_ONLY)
-            R.id.appThemeText -> binding.appThemeSelectLayout.visibility = View.VISIBLE
+            R.id.appThemeText -> {
+                binding.appThemeSelectLayout.visibility = View.VISIBLE
+                showThemeRow(false)
+            }
             R.id.themeLight -> updateTheme(AppCompatDelegate.MODE_NIGHT_NO)
             R.id.themeDark -> updateTheme(AppCompatDelegate.MODE_NIGHT_YES)
             R.id.themeSystem -> updateTheme(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
-            R.id.textSizeValue -> binding.textSizesLayout.visibility = View.VISIBLE
+            R.id.textSizeValue -> {
+                binding.textSizesLayout.visibility = View.VISIBLE
+                showTextSizeRow(false)
+            }
             R.id.actionAccessibility -> openAccessibilityService()
             R.id.closeAccessibility -> toggleAccessibilityVisibility(false)
             R.id.notWorking -> requireContext().openUrl(Constants.URL_DOUBLE_TAP)
@@ -208,6 +277,8 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
             R.id.maxApps6 -> updateHomeAppsNum(6)
             R.id.maxApps7 -> updateHomeAppsNum(7)
             R.id.maxApps8 -> updateHomeAppsNum(8)
+            R.id.maxApps9 -> updateHomeAppsNum(9)
+            R.id.maxApps10 -> updateHomeAppsNum(10)
 
             R.id.textSizeMinus -> adjustTextSizePreview(-0.1f)
             R.id.textSizePlus -> adjustTextSizePreview(0.1f)
@@ -269,6 +340,12 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
         binding.homeButtonRecents.setOnClickListener(this)
         binding.homeAppsNum.setOnClickListener(this)
         binding.screenTimeOnOff.setOnClickListener(this)
+        binding.mindfulLaunchToggle.setOnClickListener(this)
+        binding.mindfulLaunchDelay.setOnClickListener(this)
+        binding.mindfulAppsValue.setOnClickListener(this)
+        binding.screenTimeGoalValue.setOnClickListener(this)
+        binding.exportConfig.setOnClickListener(this)
+        binding.importConfig.setOnClickListener(this)
         binding.dailyWallpaperUrl.setOnClickListener(this)
         binding.dailyWallpaper.setOnClickListener(this)
         binding.solidBackground.setOnClickListener(this)
@@ -317,6 +394,8 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
         binding.maxApps6.setOnClickListener(this)
         binding.maxApps7.setOnClickListener(this)
         binding.maxApps8.setOnClickListener(this)
+        binding.maxApps9.setOnClickListener(this)
+        binding.maxApps10.setOnClickListener(this)
 
         binding.textSizeMinus.setOnClickListener(this)
         binding.textSizePlus.setOnClickListener(this)
@@ -525,8 +604,36 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
     private fun updateHomeAppsNum(num: Int) {
         binding.homeAppsNum.text = num.toString()
         binding.appsNumSelectLayout.visibility = View.GONE
+        binding.appsNumLabel.visibility = View.VISIBLE
+        binding.homeAppsNum.visibility = View.VISIBLE
         prefs.homeAppsNum = num
         viewModel.refreshHome(true)
+    }
+
+    /**
+     * The picker rows (alignment, date-time, theme, text size) are FrameLayouts:
+     * the expanding grid stacks on top of the row's label and value. Show the row
+     * chrome again when the grid closes, hide it while the grid is open — the same
+     * contract the numbers grid already follows.
+     */
+    private fun showAlignmentRow(show: Boolean) {
+        binding.alignmentLabel.visibility = if (show) View.VISIBLE else View.GONE
+        binding.alignment.visibility = if (show) View.VISIBLE else View.GONE
+    }
+
+    private fun showDateTimeRow(show: Boolean) {
+        binding.dateTimeLabel.visibility = if (show) View.VISIBLE else View.GONE
+        binding.dateTime.visibility = if (show) View.VISIBLE else View.GONE
+    }
+
+    private fun showThemeRow(show: Boolean) {
+        binding.appThemeLabel.visibility = if (show) View.VISIBLE else View.GONE
+        binding.appThemeText.visibility = if (show) View.VISIBLE else View.GONE
+    }
+
+    private fun showTextSizeRow(show: Boolean) {
+        binding.textSizeLabel.visibility = if (show) View.VISIBLE else View.GONE
+        binding.textSizeValue.visibility = if (show) View.VISIBLE else View.GONE
     }
 
     private var pendingTextSizeScale: Float = -1f
@@ -733,9 +840,151 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
         } else binding.screenTimeLayout.visibility = View.GONE
     }
 
+    /** Populate the mindful-launch section (B1) rows from prefs. */
+    private fun populateMindfulSettings() {
+        binding.mindfulLaunchToggle.text = onOff(prefs.mindfulLaunchEnabled)
+        binding.mindfulLaunchDelay.text = when (prefs.mindfulDelaySeconds.coerceIn(
+            Constants.MINDFUL_DELAY_MIN_SECONDS,
+            Constants.MINDFUL_DELAY_MAX_SECONDS,
+        )) {
+            4 -> getString(R.string.mindful_launch_delay_4)
+            5 -> getString(R.string.mindful_launch_delay_5)
+            else -> getString(R.string.mindful_launch_delay_3)
+        }
+        binding.mindfulAppsValue.text = prefs.mindfulApps.size
+            .coerceAtLeast(0)
+            .toString()
+    }
+
+    private fun toggleMindfulLaunch() {
+        prefs.mindfulLaunchEnabled = !prefs.mindfulLaunchEnabled
+        populateMindfulSettings()
+    }
+
+    private fun showMindfulDelayPicker() {
+        val values = intArrayOf(3, 4, 5)
+        val labels = listOf(
+            getString(R.string.mindful_launch_delay_3),
+            getString(R.string.mindful_launch_delay_4),
+            getString(R.string.mindful_launch_delay_5),
+        )
+        requireContext().showAppListDialog(getString(R.string.mindful_launch_delay), labels) { which ->
+            prefs.mindfulDelaySeconds = values[which]
+            populateMindfulSettings()
+        }
+    }
+
+    /** Opens a drawer picker to mark apps for mindful launch. */
+    private fun showMindfulAppsPicker() {
+        viewModel.getAppList(includeHiddenApps = true)
+        findNavController().navigate(
+            R.id.action_settingsFragment_to_appListFragment,
+            bundleOf(Constants.Key.FLAG to Constants.FLAG_SET_MINDFUL_APP)
+        )
+    }
+
+    /** Populate the daily screen-time goal row (B2). */
+    private fun populateScreenTimeGoal() {
+        if (prefs.dailyScreenTimeGoalMinutes <= 0) {
+            binding.screenTimeGoalValue.text = getString(R.string.screen_time_goal_off)
+        } else {
+            binding.screenTimeGoalValue.text = ScreenTimeGoal.formatGoal(prefs.dailyScreenTimeGoalMinutes)
+        }
+    }
+
+    private fun showScreenTimeGoalPicker() {
+        val options = listOf(
+            getString(R.string.screen_time_goal_off),
+            "30m", "1h", "1h 30m", "2h", "3h", "4h", "5h", "6h"
+        )
+        val minutes = listOf(0, 30, 60, 90, 120, 180, 240, 300, 360)
+        requireContext().showAppListDialog(getString(R.string.screen_time_goal_target), options) { which ->
+            val selected = minutes[which]
+            prefs.dailyScreenTimeGoalMinutes = selected
+            populateScreenTimeGoal()
+            viewModel.syncScreenTimeGoalWorker()
+        }
+    }
+
+    /** C2: write the configuration to a user-chosen file via ACTION_CREATE_DOCUMENT. */
+    private fun exportConfig() {
+        val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "application/json"
+            putExtra(Intent.EXTRA_TITLE, "sakina-launcher-backup.json")
+        }
+        exportLauncher.launch(intent)
+    }
+
+    /** C2: pick a backup file via ACTION_OPEN_DOCUMENT, then confirm before applying. */
+    private fun importConfig() {
+        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "*/*"
+        }
+        importLauncher.launch(intent)
+    }
+
+    private fun showImportConfirm(uri: Uri) {
+        val dialogView = layoutInflater.inflate(R.layout.dialog_app_input, null)
+        dialogView.findViewById<TextView>(R.id.dialogTitle).text =
+            getString(R.string.import_config_confirm_title)
+        val inputContainer = dialogView.findViewById<LinearLayout>(R.id.dialogInputContainer)
+        inputContainer.isVisible = false
+        val message = dialogView.findViewById<TextView>(R.id.dialogMessage)
+        message.isVisible = true
+        message.text = getString(R.string.import_config_confirm_message)
+
+        val positive = dialogView.findViewById<TextView>(R.id.dialogPositive)
+        val negative = dialogView.findViewById<TextView>(R.id.dialogNegative)
+        positive.setText(R.string.import_config_confirm_import)
+        negative.setText(R.string.close)
+        val dialog = AppDialog.create(requireContext(), dialogView)
+        positive.setOnClickListener {
+            dialog.dismiss()
+            performImport(uri)
+        }
+        negative.setOnClickListener { dialog.dismiss() }
+        dialog.show()
+    }
+
+    private fun performImport(uri: Uri) {
+        lifecycleScope.launch {
+            val json = withContext(Dispatchers.IO) {
+                runCatching {
+                    requireContext().contentResolver.openInputStream(uri)?.use { input ->
+                        BufferedReader(InputStreamReader(input)).use { it.readText() }
+                    }
+                }.getOrNull()
+            }
+            if (json.isNullOrBlank() || !isAdded) {
+                if (isAdded) requireContext().showToast(R.string.import_config_invalid)
+                return@launch
+            }
+            val ok = withContext(Dispatchers.IO) {
+                ConfigBackup(requireContext()).importJson(json)
+            }
+            if (!isAdded) return@launch
+            if (ok) {
+                requireContext().showToast(R.string.import_config_done)
+                requireActivity().recreate()
+            } else {
+                requireContext().showToast(R.string.import_config_invalid)
+            }
+        }
+    }
+
     private fun populateKeyboardText() {
         if (prefs.autoShowKeyboard) binding.autoShowKeyboard.text = getString(R.string.on)
         else binding.autoShowKeyboard.text = getString(R.string.off)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Returning from the mindful picker must refresh the count of selected apps
+        // immediately — without this the number only updates after leaving Settings
+        // and coming back (populateMindfulSettings runs on create only).
+        if (_binding != null) populateMindfulSettings()
     }
 
     private fun populateWallpaperText() {

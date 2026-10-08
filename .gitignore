@@ -28,6 +28,8 @@ dev-debug.log
 node_modules/
 # Environment variables
 .env
+# Local font backup (original un-subset fonts, restore point only)
+/app/src/main/res/font/backup_orig/
 # Editor directories and files
 .idea
 .vscode

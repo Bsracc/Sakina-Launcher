@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Mindful launch overlay — full screen, not a card.
+
+  The countdown owns the whole screen: the wallpaper is dimmed and frosted
+  behind it (window blur from helper/GlassBlur.kt, applied by the launcher
+  helper), and a large ring holds the remaining seconds. The app label sits
+  under the ring, and the actions sit at the bottom where the thumb lives.
+
+  Only token colors are used (glass system + primary ink); no raw hex.
+-->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/bg_glass_scrim">
+
+    <LinearLayout
+        android:id="@+id/mindfulCard"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:paddingHorizontal="24dp"
+        android:paddingTop="48dp"
+        android:paddingBottom="32dp">
+
+        <!-- Countdown ring: a glassActive oval large enough to own the center.
+             glassActive is near-opaque ink; the countdown text must be inverse ink
+             (TextOnGlassActive) so it reads in BOTH themes. -->
+        <TextView
+            android:id="@+id/mindfulCountdown"
+            style="@style/TextOnGlassActive"
+            android:layout_width="176dp"
+            android:layout_height="176dp"
+            android:background="@drawable/bg_mindful_countdown_ring"
+            android:gravity="center"
+            android:textSize="64sp"
+            android:accessibilityLiveRegion="polite"
+            tools:text="3" />
+
+        <TextView
+            android:id="@+id/mindfulTitle"
+            style="@style/TextLarge"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="28dp"
+            android:ellipsize="end"
+            android:fontFamily="@font/poppins_semibold"
+            android:gravity="center"
+            android:maxLines="1"
+            android:textColor="?attr/primaryColor"
+            android:textSize="26sp" />
+
+        <TextView
+            style="@style/TextSmall"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:gravity="center"
+            android:text="@string/mindful_launch_hint"
+            android:textColor="?attr/primaryColor" />
+
+        <Space
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <!-- Actions at the bottom, full width, thumb reach. -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/mindfulClose"
+                style="@style/TextSmallBold"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@drawable/bg_selector_row"
+                android:foreground="?android:attr/selectableItemBackground"
+                android:gravity="center"
+                android:minHeight="52dp"
+                android:paddingHorizontal="18dp"
+                android:paddingVertical="12dp"
+                android:text="@string/close"
+                android:textColor="?attr/primaryColor" />
+
+            <TextView
+                android:id="@+id/mindfulCancel"
+                style="@style/TextOnGlassActive"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="12dp"
+                android:background="@drawable/bg_note_segment_selected"
+                android:foreground="?android:attr/selectableItemBackground"
+                android:gravity="center"
+                android:minHeight="52dp"
+                android:maxLines="1"
+                android:paddingHorizontal="18dp"
+                android:paddingVertical="12dp"
+                android:text="@string/mindful_cancel_action"
+                android:textSize="14sp" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</FrameLayout>

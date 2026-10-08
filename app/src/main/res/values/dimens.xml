@@ -36,8 +36,4 @@
     <dimen name="radius_capsule">999dp</dimen>
     <dimen name="productive_composer_min_height">48dp</dimen>
     <dimen name="productive_timer_ring">236dp</dimen>
-    <!-- Fixed slot for the dhikr card glyphs. Emoji and monochrome glyphs report
-         different ascent/descent, so a wrap_content icon shifts the title baseline
-         between the three cards. A fixed slot keeps the row aligned. -->
-    <dimen name="muslim_dhikr_icon_slot">38dp</dimen>
 </resources>

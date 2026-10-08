@@ -491,24 +491,22 @@ class ProductiveWidgetHostHelper(
             marginEnd = (6 * density).roundToInt()
         })
 
-        fun moveButton(label: String, description: String, offset: Int): TextView = TextView(appContext).apply {
-            text = label
+        fun moveButton(iconRes: Int, description: String, offset: Int): ImageButton = ImageButton(appContext).apply {
+            setImageResource(iconRes)
             contentDescription = description
-            gravity = Gravity.CENTER
-            textSize = 16f
-            setTextColor(chromeInk)
             background = GradientDrawable().apply {
                 cornerRadius = 10 * density
                 setColor(chromeColor)
             }
+            scaleType = android.widget.ImageView.ScaleType.CENTER_INSIDE
             elevation = 4 * density
             visibility = View.GONE
             isClickable = true
             isFocusable = true
             setOnClickListener { moveCardBy(wrap, offset) }
         }
-        val upButton = moveButton("↑", "Move widget up", -1)
-        val downButton = moveButton("↓", "Move widget down", 1)
+        val upButton = moveButton(R.drawable.ic_arrow_up, "Move widget up", -1)
+        val downButton = moveButton(R.drawable.ic_arrow_down, "Move widget down", 1)
         wrap.addView(upButton, FrameLayout.LayoutParams(removeSize, removeSize).apply {
             gravity = Gravity.TOP or Gravity.END
             topMargin = (6 * density).roundToInt()

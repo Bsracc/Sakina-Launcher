@@ -3,7 +3,6 @@
      parallel work on strings.xml cannot conflict. -->
 <resources>
     <string name="muslim_after_prayer_title">After prayer</string>
-    <string name="muslim_after_prayer_icon" translatable="false">۩</string>
     <string name="dzikir_after_prayer_summary" formatted="false">%1$d readings</string>
 
     <!-- Countdown under the hero time -->

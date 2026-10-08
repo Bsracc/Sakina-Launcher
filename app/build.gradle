@@ -27,7 +27,7 @@ android {
         versionCode 113
         versionName "v6.6.4"
 
-        resourceConfigurations += ["en", "ar", "de", "es-rES", "es-rUS", "fr", "he", "hr", "hu", "in", "it", "ja", "nl", "pl", "pt-rBR", "ru-rRU", "sv", "tr", "uk", "zh"]
+        resourceConfigurations += ["en", "in", "ar"]
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -75,6 +75,13 @@ android {
         disable 'MissingTranslation'
     }
     namespace 'app.sakinalauncher'
+
+    testOptions {
+        unitTests {
+            // Robolectric needs the merged resources/themes to inflate real layouts.
+            includeAndroidResources = true
+        }
+    }
 }
 
 dependencies {
@@ -102,5 +109,5 @@ dependencies {
 
     testImplementation libs.junit
     testImplementation libs.json
-
+    testImplementation libs.robolectric
 }

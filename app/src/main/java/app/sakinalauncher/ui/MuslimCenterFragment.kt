@@ -194,18 +194,20 @@ class MuslimCenterFragment : Fragment() {
     }
 
     private fun renderPrayerChips(schedule: PrayerSchedule, activeName: PrayerName) {
-        prayerChipViews().forEach { (name, view) ->
+        prayerChipViews().forEach { (name, chip) ->
             val prayerTime = schedule.times.firstOrNull { it.name == name }
-            view.text = getString(R.string.prayer_chip_value, prayerNameLabel(name), prayerTime?.time ?: "--:--")
-            styleChip(view, active = name == activeName)
+            chip.name.text = prayerNameLabel(name)
+            chip.time.text = prayerTime?.time ?: "--:--"
+            styleChip(chip, active = name == activeName)
         }
     }
 
     private fun clearPrayerChips() {
-        prayerChipViews().forEach { (name, view) ->
-            view.text = getString(R.string.prayer_chip_value, prayerNameLabel(name), "--:--")
-            styleChip(view, active = false)
-            view.alpha = 0.55f
+        prayerChipViews().forEach { (name, chip) ->
+            chip.name.text = prayerNameLabel(name)
+            chip.time.text = "--:--"
+            styleChip(chip, active = false)
+            chip.row.alpha = 0.55f
         }
     }
 
@@ -213,11 +215,12 @@ class MuslimCenterFragment : Fragment() {
      * The active chip is filled with inverted ink, so its label must flip colour and
      * drop the legibility halo — a halo over a solid fill is what reads as "embossed".
      */
-    private fun styleChip(view: TextView, active: Boolean) {
-        view.setBackgroundResource(
-            if (active) R.drawable.bg_prayer_time_chip_active else R.drawable.bg_prayer_time_chip
+    private fun styleChip(chip: PrayerChip, active: Boolean) {
+        chip.row.setBackgroundResource(
+            if (active) R.drawable.bg_prayer_row_active else R.drawable.bg_prayer_row
         )
-        view.applyGlassInk(active, inactiveAlpha = 0.82f)
+        chip.name.applyGlassInk(active, inactiveAlpha = 0.82f)
+        chip.time.applyGlassInk(active, inactiveAlpha = 0.82f)
     }
 
     private fun themeColor(attr: Int): Int {
@@ -230,13 +233,20 @@ class MuslimCenterFragment : Fragment() {
         }
     }
 
-    private fun prayerChipViews(): Map<PrayerName, TextView> {
+    /** One prayer row: the tappable container + the two labels inside it. */
+    private data class PrayerChip(
+        val row: View,
+        val name: TextView,
+        val time: TextView,
+    )
+
+    private fun prayerChipViews(): Map<PrayerName, PrayerChip> {
         return mapOf(
-            PrayerName.FAJR to binding.subuhTime,
-            PrayerName.DHUHR to binding.dzuhurTime,
-            PrayerName.ASR to binding.asharTime,
-            PrayerName.MAGHRIB to binding.maghribTime,
-            PrayerName.ISHA to binding.isyaTime,
+            PrayerName.FAJR to PrayerChip(binding.subuhRow, binding.subuhName, binding.subuhTime),
+            PrayerName.DHUHR to PrayerChip(binding.dzuhurRow, binding.dzuhurName, binding.dzuhurTime),
+            PrayerName.ASR to PrayerChip(binding.asharRow, binding.asharName, binding.asharTime),
+            PrayerName.MAGHRIB to PrayerChip(binding.maghribRow, binding.maghribName, binding.maghribTime),
+            PrayerName.ISHA to PrayerChip(binding.isyaRow, binding.isyaName, binding.isyaTime),
         )
     }
 
@@ -301,18 +311,9 @@ class MuslimCenterFragment : Fragment() {
     }
 
     private fun renderDhikrSummary() {
-        binding.morningDhikr.text = getString(
-            R.string.dzikir_morning_summary,
-            DhikrContent.countFor(DhikrPeriod.MORNING)
-        )
-        binding.eveningDhikr.text = getString(
-            R.string.dzikir_evening_summary,
-            DhikrContent.countFor(DhikrPeriod.EVENING)
-        )
-        binding.afterPrayerDhikr.text = getString(
-            R.string.dzikir_after_prayer_summary,
-            DhikrContent.countFor(DhikrPeriod.AFTER_PRAYER)
-        )
+        binding.morningDhikrCount.text = DhikrContent.countFor(DhikrPeriod.MORNING).toString()
+        binding.eveningDhikrCount.text = DhikrContent.countFor(DhikrPeriod.EVENING).toString()
+        binding.afterPrayerDhikrCount.text = DhikrContent.countFor(DhikrPeriod.AFTER_PRAYER).toString()
     }
 
     private fun openSettings() {

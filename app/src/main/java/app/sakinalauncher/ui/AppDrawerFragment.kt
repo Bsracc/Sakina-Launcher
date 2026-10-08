@@ -28,6 +28,7 @@ import app.sakinalauncher.helper.hideKeyboard
 import app.sakinalauncher.helper.isEinkDisplay
 import app.sakinalauncher.helper.isPrivateSpaceProfile
 import app.sakinalauncher.helper.isSystemApp
+import app.sakinalauncher.helper.MindfulLaunchHelper
 import app.sakinalauncher.helper.openAppInfo
 import app.sakinalauncher.helper.openSearch
 import app.sakinalauncher.helper.openUrl
@@ -86,7 +87,7 @@ class AppDrawerFragment : Fragment() {
     private fun initViews() {
         if (flag == Constants.FLAG_HIDDEN_APPS)
             binding.search.queryHint = getString(R.string.hidden_apps)
-        else if (flag in Constants.FLAG_SET_HOME_APP_1..Constants.FLAG_SET_CALENDAR_APP)
+        else if (flag in Constants.FLAG_SET_HOME_APP_1..Constants.FLAG_SET_CALENDAR_APP || flag == Constants.FLAG_SET_MINDFUL_APP)
             binding.search.queryHint = getString(R.string.please_select_app)
         try {
             val searchTextView = binding.search.findViewById<TextView>(R.id.search_src_text)
@@ -134,6 +135,12 @@ class AppDrawerFragment : Fragment() {
             flag,
             prefs.appLabelAlignment,
             appClickListener = { appModel ->
+                if (flag == Constants.FLAG_SET_MINDFUL_APP) {
+                    // Selection happens on the checkbox only; tapping the label just
+                    // gives haptic-free visual feedback (nothing) so users can't
+                    // mis-toggle while scrolling the picker.
+                    return@AppDrawerAdapter
+                }
                 viewModel.selectedApp(appModel, flag)
                 if (flag == Constants.FLAG_LAUNCH_APP || flag == Constants.FLAG_HIDDEN_APPS)
                     findNavController().popBackStack(R.id.mainFragment, false)
@@ -209,6 +216,21 @@ class AppDrawerFragment : Fragment() {
                 prefs.setAppRenameLabel(identifier, renameLabel)
                 viewModel.getAppList()
             },
+            appMindfulListener = { appModel ->
+                if (appModel is AppModel.App) {
+                    // Silent toggle: the checkbox flipping is the feedback — no toast
+                    // in the picker (explicit user request).
+                    viewModel.toggleMindfulApp(appModel.appPackage)
+                    // ListAdapter's DiffUtil sees the same package+label after the
+                    // toggle, so a plain getAppList() produces no notify — the
+                    // checkbox would not flip on screen. Force the row to re-bind.
+                    val pos = currentAppList?.indexOfFirst {
+                        it is AppModel.App && it.appPackage == appModel.appPackage && it.user == appModel.user
+                    } ?: -1
+                    if (pos >= 0) adapter.notifyItemChanged(pos)
+                    viewModel.getAppList()
+                }
+            },
             privateSpaceToggleListener = {
                 viewModel.togglePrivateSpaceLock()
             },
@@ -270,6 +292,23 @@ class AppDrawerFragment : Fragment() {
                 }
             }
         }
+        // B1: the mindful countdown must attach to an Activity window (a dialog on
+        // the application context throws BadTokenException and force-closes).
+        viewModel.mindfulLaunchEvent.observe(viewLifecycleOwner) { request ->
+            request ?: return@observe
+            if (flag != Constants.FLAG_LAUNCH_APP && flag != Constants.FLAG_HIDDEN_APPS) return@observe
+            MindfulLaunchHelper.startMindfulCountdown(
+                requireActivity(),
+                prefs,
+                request.appLabel,
+                onLaunch = {
+                    viewModel.launchComponent(request.component, request.userHandle)
+                },
+                onCancel = {
+                    requireContext().showToast(getString(R.string.mindful_launch_cancelled))
+                }
+            )
+        }
     }
 
     /**
@@ -324,6 +363,8 @@ class AppDrawerFragment : Fragment() {
                 Constants.FLAG_SET_HOME_APP_6 -> prefs.appName6 = name
                 Constants.FLAG_SET_HOME_APP_7 -> prefs.appName7 = name
                 Constants.FLAG_SET_HOME_APP_8 -> prefs.appName8 = name
+                Constants.FLAG_SET_HOME_APP_9 -> prefs.appName9 = name
+                Constants.FLAG_SET_HOME_APP_10 -> prefs.appName10 = name
             }
             findNavController().popBackStack()
         }

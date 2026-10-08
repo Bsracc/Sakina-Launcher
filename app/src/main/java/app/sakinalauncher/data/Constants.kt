@@ -130,12 +130,15 @@ object Constants {
     const val FLAG_SET_HOME_APP_6 = 6
     const val FLAG_SET_HOME_APP_7 = 7
     const val FLAG_SET_HOME_APP_8 = 8
+    const val FLAG_SET_HOME_APP_9 = 9
+    const val FLAG_SET_HOME_APP_10 = 10
 
     const val FLAG_SET_SWIPE_LEFT_APP = 11
     const val FLAG_SET_SWIPE_RIGHT_APP = 12
     const val FLAG_SET_CLOCK_APP = 13
     const val FLAG_SET_CALENDAR_APP = 14
     const val FLAG_SET_SCREEN_TIME_APP = 15
+    const val FLAG_SET_MINDFUL_APP = 16
 
     const val REQUEST_CODE_ENABLE_ADMIN = 666
     const val REQUEST_CODE_LAUNCHER_SELECTOR = 678
@@ -174,4 +177,10 @@ object Constants {
     const val DIGITAL_WELLBEING_SAMSUNG_PACKAGE_NAME = "com.samsung.android.forest"
     const val DIGITAL_WELLBEING_SAMSUNG_ACTIVITY = "com.samsung.android.forest.launcher.LauncherActivity"
     const val WALLPAPER_WORKER_NAME = "WALLPAPER_WORKER_NAME"
+    const val SCREEN_TIME_GOAL_WORKER_NAME = "SCREEN_TIME_GOAL_WORKER_NAME"
+
+    /** Default mindful countdown seconds, clamped to 3..5 by the UI/helper. */
+    const val MINDFUL_DELAY_DEFAULT_SECONDS = 3
+    const val MINDFUL_DELAY_MIN_SECONDS = 3
+    const val MINDFUL_DELAY_MAX_SECONDS = 5
 }

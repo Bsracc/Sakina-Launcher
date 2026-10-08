@@ -1,14 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Muslim Center — symmetric glass layout.
+  Muslim Center — reworked layout for readability.
 
-  Geometry rules (keep them if you edit this file):
-   * One 20dp page gutter, one 14dp gap between cards, one 20dp card padding.
-   * The five prayer chips live in ONE row with equal weight, so the grid is
-     symmetric by construction (the old 3+2 layout needed an invisible spacer).
-   * The three dhikr cards likewise share one row with equal weight.
-   * Surfaces come from the glass token system only: bg_glass_card /
-     bg_glass_inset / bg_glass_active. No elevation, no gradient, no emboss.
+  Hierarchy:
+   1. Header row (back + centred title).
+   2. Prayer card: eyebrow → hero (next prayer name + big time + countdown)
+      → five-prayer list (name left, time right; active row = filled pill).
+   3. Section header "Dzikir" separating the two concerns.
+   4. Three dhikr cards (big count, caption, label) in one symmetric row.
+   5. Footer: location + source.
+
+  Geometry: 20dp page gutter, 14dp between cards, 20dp card padding.
+  Surfaces: glass token system only (bg_glass_card / bg_glass_inset / bg_glass_active).
 -->
 <app.sakinalauncher.ui.view.SwipeAwareScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
@@ -29,11 +32,7 @@
         android:paddingTop="32dp"
         android:paddingBottom="28dp">
 
-        <!--
-          Header: explicit back affordance on the left, title on the true centre.
-          The right spacer is the same width as the button so the title stays
-          optically centred instead of being pushed off-axis.
-        -->
+        <!-- Header: back on left, optically centred title (right spacer mirrors button) -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -43,13 +42,13 @@
 
             <ImageView
                 android:id="@+id/btnBack"
-                android:layout_width="42dp"
-                android:layout_height="42dp"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
                 android:background="@drawable/bg_glass_pill"
                 android:clickable="true"
                 android:contentDescription="@string/nav_back"
                 android:focusable="true"
-                android:padding="11dp"
+                android:padding="12dp"
                 android:src="@drawable/ic_chevron_left" />
 
             <TextView
@@ -65,8 +64,8 @@
                 android:textSize="24sp" />
 
             <View
-                android:layout_width="42dp"
-                android:layout_height="42dp" />
+                android:layout_width="48dp"
+                android:layout_height="48dp" />
 
         </LinearLayout>
 
@@ -94,7 +93,7 @@
                 android:textAllCaps="true"
                 android:textSize="10sp" />
 
-            <!-- Hero: which prayer is next, at what time, how long from now -->
+            <!-- Hero: next prayer, big time, countdown -->
             <LinearLayout
                 android:id="@+id/nextPrayerHero"
                 android:layout_width="match_parent"
@@ -144,89 +143,174 @@
 
             </LinearLayout>
 
-            <!-- Five prayers, one symmetric row -->
+            <!-- Five prayers as a vertical list: name left, time right, one line each -->
             <LinearLayout
-                android:id="@+id/prayerChipRow"
+                android:id="@+id/prayerList"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="18dp"
+                android:layout_marginTop="16dp"
                 android:baselineAligned="false"
-                android:orientation="horizontal">
+                android:orientation="vertical">
 
-                <TextView
-                    android:id="@+id/subuhTime"
-                    style="@style/TextSmall"
-                    android:layout_width="0dp"
-                    android:layout_height="62dp"
-                    android:layout_marginHorizontal="3dp"
-                    android:layout_weight="1"
-                    android:background="@drawable/bg_glass_inset"
-                    android:gravity="center"
-                    android:lineSpacingExtra="3dp"
-                    android:maxLines="2"
-                    android:textAlignment="center"
-                    android:textSize="12sp"
-                    tools:text="Subuh\n04:39" />
+                <!-- Fajr -->
+                <LinearLayout
+                    android:id="@+id/subuhRow"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:background="@drawable/bg_prayer_row"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="16dp">
 
-                <TextView
-                    android:id="@+id/dzuhurTime"
-                    style="@style/TextSmall"
-                    android:layout_width="0dp"
-                    android:layout_height="62dp"
-                    android:layout_marginHorizontal="3dp"
-                    android:layout_weight="1"
-                    android:background="@drawable/bg_glass_inset"
-                    android:gravity="center"
-                    android:lineSpacingExtra="3dp"
-                    android:maxLines="2"
-                    android:textAlignment="center"
-                    android:textSize="12sp"
-                    tools:text="Dzuhur\n11:56" />
+                    <TextView
+                        android:id="@+id/subuhName"
+                        style="@style/TextSmall"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:maxLines="1"
+                        android:textSize="15sp"
+                        tools:text="Fajr" />
 
-                <TextView
-                    android:id="@+id/asharTime"
-                    style="@style/TextSmall"
-                    android:layout_width="0dp"
-                    android:layout_height="62dp"
-                    android:layout_marginHorizontal="3dp"
-                    android:layout_weight="1"
-                    android:background="@drawable/bg_glass_inset"
-                    android:gravity="center"
-                    android:lineSpacingExtra="3dp"
-                    android:maxLines="2"
-                    android:textAlignment="center"
-                    android:textSize="12sp"
-                    tools:text="Ashar\n15:17" />
+                    <TextView
+                        android:id="@+id/subuhTime"
+                        style="@style/TextSmall"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="end"
+                        android:maxLines="1"
+                        android:textSize="15sp"
+                        tools:text="04:39" />
 
-                <TextView
-                    android:id="@+id/maghribTime"
-                    style="@style/TextSmall"
-                    android:layout_width="0dp"
-                    android:layout_height="62dp"
-                    android:layout_marginHorizontal="3dp"
-                    android:layout_weight="1"
-                    android:background="@drawable/bg_glass_inset"
-                    android:gravity="center"
-                    android:lineSpacingExtra="3dp"
-                    android:maxLines="2"
-                    android:textAlignment="center"
-                    android:textSize="12sp"
-                    tools:text="Maghrib\n17:49" />
+                </LinearLayout>
 
-                <TextView
-                    android:id="@+id/isyaTime"
-                    style="@style/TextSmall"
-                    android:layout_width="0dp"
-                    android:layout_height="62dp"
-                    android:layout_marginHorizontal="3dp"
-                    android:layout_weight="1"
-                    android:background="@drawable/bg_glass_inset"
-                    android:gravity="center"
-                    android:lineSpacingExtra="3dp"
-                    android:maxLines="2"
-                    android:textAlignment="center"
-                    android:textSize="12sp"
-                    tools:text="Isya\n19:02" />
+                <!-- Dhuhr -->
+                <LinearLayout
+                    android:id="@+id/dzuhurRow"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:background="@drawable/bg_prayer_row"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="16dp">
+
+                    <TextView
+                        android:id="@+id/dzuhurName"
+                        style="@style/TextSmall"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:maxLines="1"
+                        android:textSize="15sp"
+                        tools:text="Dhuhr" />
+
+                    <TextView
+                        android:id="@+id/dzuhurTime"
+                        style="@style/TextSmall"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="end"
+                        android:maxLines="1"
+                        android:textSize="15sp"
+                        tools:text="11:56" />
+
+                </LinearLayout>
+
+                <!-- Asr -->
+                <LinearLayout
+                    android:id="@+id/asharRow"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:background="@drawable/bg_prayer_row"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="16dp">
+
+                    <TextView
+                        android:id="@+id/asharName"
+                        style="@style/TextSmall"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:maxLines="1"
+                        android:textSize="15sp"
+                        tools:text="Asr" />
+
+                    <TextView
+                        android:id="@+id/asharTime"
+                        style="@style/TextSmall"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="end"
+                        android:maxLines="1"
+                        android:textSize="15sp"
+                        tools:text="15:17" />
+
+                </LinearLayout>
+
+                <!-- Maghrib -->
+                <LinearLayout
+                    android:id="@+id/maghribRow"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:background="@drawable/bg_prayer_row"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="16dp">
+
+                    <TextView
+                        android:id="@+id/maghribName"
+                        style="@style/TextSmall"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:maxLines="1"
+                        android:textSize="15sp"
+                        tools:text="Maghrib" />
+
+                    <TextView
+                        android:id="@+id/maghribTime"
+                        style="@style/TextSmall"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="end"
+                        android:maxLines="1"
+                        android:textSize="15sp"
+                        tools:text="17:49" />
+
+                </LinearLayout>
+
+                <!-- Isha -->
+                <LinearLayout
+                    android:id="@+id/isyaRow"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:background="@drawable/bg_prayer_row"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="16dp">
+
+                    <TextView
+                        android:id="@+id/isyaName"
+                        style="@style/TextSmall"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:maxLines="1"
+                        android:textSize="15sp"
+                        tools:text="Isha" />
+
+                    <TextView
+                        android:id="@+id/isyaTime"
+                        style="@style/TextSmall"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="end"
+                        android:maxLines="1"
+                        android:textSize="15sp"
+                        tools:text="19:02" />
+
+                </LinearLayout>
 
             </LinearLayout>
 
@@ -255,20 +339,31 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"
+                android:alpha="0.75"
                 android:gravity="center"
                 android:maxLines="2"
-                android:alpha="0.75"
                 android:textSize="12sp"
                 tools:text="Calculated offline - MWL" />
 
         </LinearLayout>
 
-        <!-- ============================ DHIKR ROW ============================ -->
+        <!-- ============================ DZIKIR SECTION ============================ -->
+        <TextView
+            style="@style/TextSmallLight"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="22dp"
+            android:layout_marginBottom="10dp"
+            android:alpha="0.85"
+            android:letterSpacing="0.18"
+            android:text="@string/dzikir_section_title"
+            android:textAllCaps="true"
+            android:textSize="11sp" />
+
         <LinearLayout
             android:id="@+id/dhikrRow"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="14dp"
             android:baselineAligned="false"
             android:orientation="horizontal">
 
@@ -283,19 +378,33 @@
                 android:focusable="true"
                 android:foreground="?android:attr/selectableItemBackground"
                 android:gravity="center_horizontal"
-                android:minHeight="132dp"
+                android:minHeight="128dp"
                 android:orientation="vertical"
                 android:paddingHorizontal="8dp"
-                android:paddingVertical="18dp">
+                android:paddingVertical="16dp">
 
                 <TextView
-                    style="@style/TextLarge"
-                    android:layout_width="match_parent"
-                    android:layout_height="@dimen/muslim_dhikr_icon_slot"
+                    android:id="@+id/morningDhikrCount"
+                    style="@style/TextDefault"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/poppins_semibold"
                     android:gravity="center"
-                    android:includeFontPadding="false"
-                    android:text="@string/dzikir_pagi_icon"
-                    android:textSize="26sp" />
+                    android:letterSpacing="0.02"
+                    android:textSize="30sp"
+                    tools:text="24" />
+
+                <TextView
+                    style="@style/TextSmallLight"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:alpha="0.6"
+                    android:gravity="center"
+                    android:letterSpacing="0.14"
+                    android:text="@string/dhikr_readings_short"
+                    android:textAllCaps="true"
+                    android:textSize="9sp" />
 
                 <TextView
                     style="@style/TextMedium"
@@ -305,18 +414,7 @@
                     android:gravity="center"
                     android:maxLines="2"
                     android:text="@string/dzikir_pagi"
-                    android:textSize="14sp" />
-
-                <TextView
-                    android:id="@+id/morningDhikr"
-                    style="@style/TextSmallLight"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:alpha="0.8"
-                    android:gravity="center"
-                    android:maxLines="1"
-                    android:textSize="11sp" />
+                    android:textSize="13sp" />
 
             </LinearLayout>
 
@@ -331,19 +429,33 @@
                 android:focusable="true"
                 android:foreground="?android:attr/selectableItemBackground"
                 android:gravity="center_horizontal"
-                android:minHeight="132dp"
+                android:minHeight="128dp"
                 android:orientation="vertical"
                 android:paddingHorizontal="8dp"
-                android:paddingVertical="18dp">
+                android:paddingVertical="16dp">
 
                 <TextView
-                    style="@style/TextLarge"
-                    android:layout_width="match_parent"
-                    android:layout_height="@dimen/muslim_dhikr_icon_slot"
+                    android:id="@+id/eveningDhikrCount"
+                    style="@style/TextDefault"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/poppins_semibold"
                     android:gravity="center"
-                    android:includeFontPadding="false"
-                    android:text="@string/dzikir_petang_icon"
-                    android:textSize="26sp" />
+                    android:letterSpacing="0.02"
+                    android:textSize="30sp"
+                    tools:text="24" />
+
+                <TextView
+                    style="@style/TextSmallLight"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:alpha="0.6"
+                    android:gravity="center"
+                    android:letterSpacing="0.14"
+                    android:text="@string/dhikr_readings_short"
+                    android:textAllCaps="true"
+                    android:textSize="9sp" />
 
                 <TextView
                     style="@style/TextMedium"
@@ -353,18 +465,7 @@
                     android:gravity="center"
                     android:maxLines="2"
                     android:text="@string/dzikir_petang"
-                    android:textSize="14sp" />
-
-                <TextView
-                    android:id="@+id/eveningDhikr"
-                    style="@style/TextSmallLight"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:alpha="0.8"
-                    android:gravity="center"
-                    android:maxLines="1"
-                    android:textSize="11sp" />
+                    android:textSize="13sp" />
 
             </LinearLayout>
 
@@ -379,19 +480,33 @@
                 android:focusable="true"
                 android:foreground="?android:attr/selectableItemBackground"
                 android:gravity="center_horizontal"
-                android:minHeight="132dp"
+                android:minHeight="128dp"
                 android:orientation="vertical"
                 android:paddingHorizontal="8dp"
-                android:paddingVertical="18dp">
+                android:paddingVertical="16dp">
 
                 <TextView
-                    style="@style/TextLarge"
-                    android:layout_width="match_parent"
-                    android:layout_height="@dimen/muslim_dhikr_icon_slot"
+                    android:id="@+id/afterPrayerDhikrCount"
+                    style="@style/TextDefault"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/poppins_semibold"
                     android:gravity="center"
-                    android:includeFontPadding="false"
-                    android:text="@string/muslim_after_prayer_icon"
-                    android:textSize="26sp" />
+                    android:letterSpacing="0.02"
+                    android:textSize="30sp"
+                    tools:text="13" />
+
+                <TextView
+                    style="@style/TextSmallLight"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:alpha="0.6"
+                    android:gravity="center"
+                    android:letterSpacing="0.14"
+                    android:text="@string/dhikr_readings_short"
+                    android:textAllCaps="true"
+                    android:textSize="9sp" />
 
                 <TextView
                     style="@style/TextMedium"
@@ -401,18 +516,7 @@
                     android:gravity="center"
                     android:maxLines="2"
                     android:text="@string/muslim_after_prayer_title"
-                    android:textSize="14sp" />
-
-                <TextView
-                    android:id="@+id/afterPrayerDhikr"
-                    style="@style/TextSmallLight"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:alpha="0.8"
-                    android:gravity="center"
-                    android:maxLines="1"
-                    android:textSize="11sp" />
+                    android:textSize="13sp" />
 
             </LinearLayout>
 

@@ -50,6 +50,12 @@ class Prefs(context: Context) {
     private val PRO_MESSAGE_SHOWN = "PRO_MESSAGE_SHOWN"
     private val HIDE_SET_DEFAULT_LAUNCHER = "HIDE_SET_DEFAULT_LAUNCHER"
     private val SCREEN_TIME_LAST_UPDATED = "SCREEN_TIME_LAST_UPDATED"
+    private val MINDFUL_APPS = "MINDFUL_APPS"
+    private val MINDFUL_LAUNCH_ENABLED = "MINDFUL_LAUNCH_ENABLED"
+    private val MINDFUL_DELAY_SECONDS = "MINDFUL_DELAY_SECONDS"
+    private val DAILY_SCREEN_TIME_GOAL_MINUTES = "DAILY_SCREEN_TIME_GOAL_MINUTES"
+    private val SCREEN_TIME_GOAL_REACHED_DAY = "SCREEN_TIME_GOAL_REACHED_DAY"
+    private val SCREEN_TIME_GOAL_MISSED_DAY = "SCREEN_TIME_GOAL_MISSED_DAY"
     private val LAUNCHER_RESTART_TIMESTAMP = "LAUNCHER_RECREATE_TIMESTAMP"
     private val SHOWN_ON_DAY_OF_YEAR = "SHOWN_ON_DAY_OF_YEAR"
     private val HOME_BUTTON_SHOW_RECENTS = "HOME_BUTTON_SHOW_RECENTS"
@@ -70,6 +76,8 @@ class Prefs(context: Context) {
     private val APP_NAME_6 = "APP_NAME_6"
     private val APP_NAME_7 = "APP_NAME_7"
     private val APP_NAME_8 = "APP_NAME_8"
+    private val APP_NAME_9 = "APP_NAME_9"
+    private val APP_NAME_10 = "APP_NAME_10"
     private val APP_PACKAGE_1 = "APP_PACKAGE_1"
     private val APP_PACKAGE_2 = "APP_PACKAGE_2"
     private val APP_PACKAGE_3 = "APP_PACKAGE_3"
@@ -78,6 +86,8 @@ class Prefs(context: Context) {
     private val APP_PACKAGE_6 = "APP_PACKAGE_6"
     private val APP_PACKAGE_7 = "APP_PACKAGE_7"
     private val APP_PACKAGE_8 = "APP_PACKAGE_8"
+    private val APP_PACKAGE_9 = "APP_PACKAGE_9"
+    private val APP_PACKAGE_10 = "APP_PACKAGE_10"
     private val APP_ACTIVITY_CLASS_NAME_1 = "APP_ACTIVITY_CLASS_NAME_1"
     private val APP_ACTIVITY_CLASS_NAME_2 = "APP_ACTIVITY_CLASS_NAME_2"
     private val APP_ACTIVITY_CLASS_NAME_3 = "APP_ACTIVITY_CLASS_NAME_3"
@@ -86,6 +96,8 @@ class Prefs(context: Context) {
     private val APP_ACTIVITY_CLASS_NAME_6 = "APP_ACTIVITY_CLASS_NAME_6"
     private val APP_ACTIVITY_CLASS_NAME_7 = "APP_ACTIVITY_CLASS_NAME_7"
     private val APP_ACTIVITY_CLASS_NAME_8 = "APP_ACTIVITY_CLASS_NAME_8"
+    private val APP_ACTIVITY_CLASS_NAME_9 = "APP_ACTIVITY_CLASS_NAME_9"
+    private val APP_ACTIVITY_CLASS_NAME_10 = "APP_ACTIVITY_CLASS_NAME_10"
     private val APP_USER_1 = "APP_USER_1"
     private val APP_USER_2 = "APP_USER_2"
     private val APP_USER_3 = "APP_USER_3"
@@ -94,6 +106,8 @@ class Prefs(context: Context) {
     private val APP_USER_6 = "APP_USER_6"
     private val APP_USER_7 = "APP_USER_7"
     private val APP_USER_8 = "APP_USER_8"
+    private val APP_USER_9 = "APP_USER_9"
+    private val APP_USER_10 = "APP_USER_10"
 
     private val APP_NAME_SWIPE_LEFT = "APP_NAME_SWIPE_LEFT"
     private val APP_NAME_SWIPE_RIGHT = "APP_NAME_SWIPE_RIGHT"
@@ -129,6 +143,10 @@ class Prefs(context: Context) {
     private val SHORTCUT_ID_7 = "SHORTCUT_ID_7"
     private val IS_SHORTCUT_8 = "IS_SHORTCUT_8"
     private val SHORTCUT_ID_8 = "SHORTCUT_ID_8"
+    private val IS_SHORTCUT_9 = "IS_SHORTCUT_9"
+    private val SHORTCUT_ID_9 = "SHORTCUT_ID_9"
+    private val IS_SHORTCUT_10 = "IS_SHORTCUT_10"
+    private val SHORTCUT_ID_10 = "SHORTCUT_ID_10"
 
     private val SHORTCUT_ID_SWIPE_LEFT = "SHORTCUT_ID_SWIPE_LEFT"
     private val IS_SHORTCUT_SWIPE_LEFT = "IS_SHORTCUT_SWIPE_LEFT"
@@ -277,6 +295,25 @@ class Prefs(context: Context) {
     var proMessageShown: Boolean by boolPref(PRO_MESSAGE_SHOWN, false)
     var hideSetDefaultLauncher: Boolean by boolPref(HIDE_SET_DEFAULT_LAUNCHER, false)
     var screenTimeLastUpdated: Long by longPref(SCREEN_TIME_LAST_UPDATED, 0L)
+
+    /** Package names opted in to mindful launch (B1). Empty set = feature off per-app. */
+    var mindfulApps: MutableSet<String>
+        get() = prefs.getStringSet(MINDFUL_APPS, emptySet()).orEmpty().toMutableSet()
+        set(value) = prefs.edit { putStringSet(MINDFUL_APPS, value.toSet()).apply() }
+
+    /** Master toggle for mindful launch. Individual apps opt in via [mindfulApps]. */
+    var mindfulLaunchEnabled: Boolean by boolPref(MINDFUL_LAUNCH_ENABLED, false)
+
+    /** Countdown seconds before a mindful app opens (3–5). */
+    var mindfulDelaySeconds: Int by intPref(MINDFUL_DELAY_SECONDS, 3)
+
+    /** Daily screen-time goal in minutes; 0 = disabled. */
+    var dailyScreenTimeGoalMinutes: Int by intPref(DAILY_SCREEN_TIME_GOAL_MINUTES, 0)
+
+    /** Day-of-year when the goal-reached / goal-missed notice was last shown (dedupe). */
+    var screenTimeGoalReachedNotifiedDay: Int by intPref(SCREEN_TIME_GOAL_REACHED_DAY, 0)
+    var screenTimeGoalMissedNotifiedDay: Int by intPref(SCREEN_TIME_GOAL_MISSED_DAY, 0)
+
     var launcherRestartTimestamp: Long by longPref(LAUNCHER_RESTART_TIMESTAMP, 0L)
     var shownOnDayOfYear: Int by intPref(SHOWN_ON_DAY_OF_YEAR, 0)
     var homeButtonShowRecents: Boolean by boolPref(HOME_BUTTON_SHOW_RECENTS, false)
@@ -369,6 +406,8 @@ class Prefs(context: Context) {
     var appName6: String by stringPref(APP_NAME_6, "")
     var appName7: String by stringPref(APP_NAME_7, "")
     var appName8: String by stringPref(APP_NAME_8, "")
+    var appName9: String by stringPref(APP_NAME_9, "")
+    var appName10: String by stringPref(APP_NAME_10, "")
 
     var appPackage1: String by stringPref(APP_PACKAGE_1, "")
     var appPackage2: String by stringPref(APP_PACKAGE_2, "")
@@ -378,6 +417,8 @@ class Prefs(context: Context) {
     var appPackage6: String by stringPref(APP_PACKAGE_6, "")
     var appPackage7: String by stringPref(APP_PACKAGE_7, "")
     var appPackage8: String by stringPref(APP_PACKAGE_8, "")
+    var appPackage9: String by stringPref(APP_PACKAGE_9, "")
+    var appPackage10: String by stringPref(APP_PACKAGE_10, "")
 
     var appActivityClassName1: String? by nullableStringPref(APP_ACTIVITY_CLASS_NAME_1, "")
     var appActivityClassName2: String? by nullableStringPref(APP_ACTIVITY_CLASS_NAME_2, "")
@@ -387,6 +428,8 @@ class Prefs(context: Context) {
     var appActivityClassName6: String? by nullableStringPref(APP_ACTIVITY_CLASS_NAME_6, "")
     var appActivityClassName7: String? by nullableStringPref(APP_ACTIVITY_CLASS_NAME_7, "")
     var appActivityClassName8: String? by nullableStringPref(APP_ACTIVITY_CLASS_NAME_8, "")
+    var appActivityClassName9: String? by nullableStringPref(APP_ACTIVITY_CLASS_NAME_9, "")
+    var appActivityClassName10: String? by nullableStringPref(APP_ACTIVITY_CLASS_NAME_10, "")
 
     var appUser1: String by stringPref(APP_USER_1, "")
     var appUser2: String by stringPref(APP_USER_2, "")
@@ -396,6 +439,8 @@ class Prefs(context: Context) {
     var appUser6: String by stringPref(APP_USER_6, "")
     var appUser7: String by stringPref(APP_USER_7, "")
     var appUser8: String by stringPref(APP_USER_8, "")
+    var appUser9: String by stringPref(APP_USER_9, "")
+    var appUser10: String by stringPref(APP_USER_10, "")
 
     var appNameSwipeLeft: String by stringPref(APP_NAME_SWIPE_LEFT, "Camera")
     var appNameSwipeRight: String by stringPref(APP_NAME_SWIPE_RIGHT, "Phone")
@@ -432,94 +477,98 @@ class Prefs(context: Context) {
     var shortcutId7: String by stringPref(SHORTCUT_ID_7, "")
     var isShortcut8: Boolean by boolPref(IS_SHORTCUT_8, false)
     var shortcutId8: String by stringPref(SHORTCUT_ID_8, "")
+    var isShortcut9: Boolean by boolPref(IS_SHORTCUT_9, false)
+    var shortcutId9: String by stringPref(SHORTCUT_ID_9, "")
+    var isShortcut10: Boolean by boolPref(IS_SHORTCUT_10, false)
+    var shortcutId10: String by stringPref(SHORTCUT_ID_10, "")
 
     var shortcutIdSwipeLeft: String by stringPref(SHORTCUT_ID_SWIPE_LEFT, "")
     var isShortcutSwipeLeft: Boolean by boolPref(IS_SHORTCUT_SWIPE_LEFT, false)
     var shortcutIdSwipeRight: String by stringPref(SHORTCUT_ID_SWIPE_RIGHT, "")
     var isShortcutSwipeRight: Boolean by boolPref(IS_SHORTCUT_SWIPE_RIGHT, false)
 
-    fun getAppName(location: Int): String {
-        return when (location) {
-            1 -> appName1
-            2 -> appName2
-            3 -> appName3
-            4 -> appName4
-            5 -> appName5
-            6 -> appName6
-            7 -> appName7
-            8 -> appName8
-            else -> ""
-        }
+    fun getAppName(location: Int): String = when (location) {
+        1 -> appName1
+        2 -> appName2
+        3 -> appName3
+        4 -> appName4
+        5 -> appName5
+        6 -> appName6
+        7 -> appName7
+        8 -> appName8
+        9 -> appName9
+        10 -> appName10
+        else -> ""
     }
 
-    fun getAppPackage(location: Int): String {
-        return when (location) {
-            1 -> appPackage1
-            2 -> appPackage2
-            3 -> appPackage3
-            4 -> appPackage4
-            5 -> appPackage5
-            6 -> appPackage6
-            7 -> appPackage7
-            8 -> appPackage8
-            else -> ""
-        }
+    fun getAppPackage(location: Int): String = when (location) {
+        1 -> appPackage1
+        2 -> appPackage2
+        3 -> appPackage3
+        4 -> appPackage4
+        5 -> appPackage5
+        6 -> appPackage6
+        7 -> appPackage7
+        8 -> appPackage8
+        9 -> appPackage9
+        10 -> appPackage10
+        else -> ""
     }
 
-    fun getAppActivityClassName(location: Int): String {
-        return when (location) {
-            1 -> appActivityClassName1
-            2 -> appActivityClassName2
-            3 -> appActivityClassName3
-            4 -> appActivityClassName4
-            5 -> appActivityClassName5
-            6 -> appActivityClassName6
-            7 -> appActivityClassName7
-            8 -> appActivityClassName8
-            else -> ""
-        }.orEmpty()
+    fun getAppActivityClassName(location: Int): String = when (location) {
+        1 -> appActivityClassName1
+        2 -> appActivityClassName2
+        3 -> appActivityClassName3
+        4 -> appActivityClassName4
+        5 -> appActivityClassName5
+        6 -> appActivityClassName6
+        7 -> appActivityClassName7
+        8 -> appActivityClassName8
+        9 -> appActivityClassName9
+        10 -> appActivityClassName10
+        else -> null
+    }.orEmpty()
+
+    fun getAppUser(location: Int): String = when (location) {
+        1 -> appUser1
+        2 -> appUser2
+        3 -> appUser3
+        4 -> appUser4
+        5 -> appUser5
+        6 -> appUser6
+        7 -> appUser7
+        8 -> appUser8
+        9 -> appUser9
+        10 -> appUser10
+        else -> ""
     }
 
-    fun getAppUser(location: Int): String {
-        return when (location) {
-            1 -> appUser1
-            2 -> appUser2
-            3 -> appUser3
-            4 -> appUser4
-            5 -> appUser5
-            6 -> appUser6
-            7 -> appUser7
-            8 -> appUser8
-            else -> ""
-        }
+    fun getShortcutId(location: Int): String = when (location) {
+        1 -> shortcutId1
+        2 -> shortcutId2
+        3 -> shortcutId3
+        4 -> shortcutId4
+        5 -> shortcutId5
+        6 -> shortcutId6
+        7 -> shortcutId7
+        8 -> shortcutId8
+        9 -> shortcutId9
+        10 -> shortcutId10
+        else -> ""
     }
 
-    fun getShortcutId(location: Int): String {
-        return when (location) {
-            1 -> shortcutId1
-            2 -> shortcutId2
-            3 -> shortcutId3
-            4 -> shortcutId4
-            5 -> shortcutId5
-            6 -> shortcutId6
-            7 -> shortcutId7
-            8 -> shortcutId8
-            else -> ""
-        }
-    }
-
-    fun getIsShortcut(location: Int): Boolean {
-        return when (location) {
-            1 -> isShortcut1
-            2 -> isShortcut2
-            3 -> isShortcut3
-            4 -> isShortcut4
-            5 -> isShortcut5
-            6 -> isShortcut6
-            7 -> isShortcut7
-            8 -> isShortcut8
-            else -> false
-        }
+    fun getIsShortcut(location: Int): Boolean = when (location) {
+        1 -> isShortcut1
+        2 -> isShortcut2
+        3 -> isShortcut3
+        4 -> isShortcut4
+        5 -> isShortcut5
+        6 -> isShortcut6
+        7 -> isShortcut7
+        8 -> isShortcut8
+        9 -> isShortcut9
+        10 -> isShortcut10
+        else -> false
     }
 
     fun setAppActivityClassName(location: Int, activityClassName: String) {
@@ -532,11 +581,13 @@ class Prefs(context: Context) {
             6 -> appActivityClassName6 = activityClassName
             7 -> appActivityClassName7 = activityClassName
             8 -> appActivityClassName8 = activityClassName
+            9 -> appActivityClassName9 = activityClassName
+            10 -> appActivityClassName10 = activityClassName
         }
     }
 
     fun updateAppActivityClassName(packageName: String, activityClassName: String) {
-        for (i in 1..8) {
+        for (i in 1..10) {
             if (getAppPackage(i) == packageName) setAppActivityClassName(i, activityClassName)
         }
         if (clockAppPackage == packageName) clockAppClassName = activityClassName

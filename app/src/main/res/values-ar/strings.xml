@@ -159,10 +159,10 @@
     <string name="productive_dialog_width">عرض الحوار</string>
     <string name="productive_dialog_width_preview">عرض الحوار: %1$d%%</string>
     <string name="productive_keep_one_widget">أبقِ وحدة واحدة على الأقل مفعّلة</string>
-    <string name="dialog_width_70">٪٧٠ — ضيق</string>
-    <string name="dialog_width_80">٪٨٠ — متوسط</string>
-    <string name="dialog_width_90">٪٩٠ — واسع</string>
-    <string name="dialog_width_100">٪١٠٠ — كامل</string>
+    <string name="dialog_width_70">٪٧٠ (ضيق)</string>
+    <string name="dialog_width_80">٪٨٠ (متوسط)</string>
+    <string name="dialog_width_90">٪٩٠ (واسع)</string>
+    <string name="dialog_width_100">٪١٠٠ (كامل)</string>
     <string name="widgets_not_supported">أدوات الشاشة الرئيسية غير مدعومة بعد</string>
     <string name="pin_shortcuts_not_supported">تثبيت الاختصارات غير مدعوم</string>
     <string name="shortcut_pinned">تم تثبيت الاختصار</string>
@@ -201,5 +201,5 @@
     <string name="language_english">الإنجليزية</string>
     <string name="language_indonesian">الإندونيسية</string>
     <string name="about_title">عن Sakinah Launcher</string>
-    <string name="about_message">Sakinah Launcher مشغّل هادئ وبسيط مع مركز إسلامي مدمج — أوقات الصلاة، أذكار الصباح والمساء، وسبحة.\n\nأسئلة سريعة:\n• الإعدادات: اضغط مطوّلًا على الشاشة الرئيسية.\n• قفل الشاشة: انقر مرتين (فعّل إمكانية الوصول أولًا).\n• الملاحظات والمهام والمؤقت: اسحب لفتح اللوحة الإنتاجية.\n• التطبيقات المخفية: اضغط مطوّلًا على اسم التطبيق في القائمة.\n\nمصمم للتركيز لا للتشتت.</string>
+    <string name="about_message">Sakinah Launcher مشغّل هادئ وبسيط مع مركز إسلامي مدمج: أوقات الصلاة، أذكار الصباح والمساء، وسبحة.\n\nأسئلة سريعة:\n• الإعدادات: اضغط مطوّلًا على الشاشة الرئيسية.\n• قفل الشاشة: انقر مرتين (فعّل إمكانية الوصول أولًا).\n• الملاحظات والمهام والمؤقت: اسحب لفتح اللوحة الإنتاجية.\n• التطبيقات المخفية: اضغط مطوّلًا على اسم التطبيق في القائمة.\n\nمصمم للتركيز لا للتشتت.</string>
 </resources>

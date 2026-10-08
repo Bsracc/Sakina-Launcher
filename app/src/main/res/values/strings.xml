@@ -12,6 +12,8 @@
     <string name="tag_6" translatable="false">6</string>
     <string name="tag_7" translatable="false">7</string>
     <string name="tag_8" translatable="false">8</string>
+    <string name="tag_9" translatable="false">9</string>
+    <string name="tag_10" translatable="false">10</string>
     <string name="time_spent_min" translatable="false"><b>%1$sm</b></string>
     <string name="time_spent_hour" translatable="false">%1$sh %2$sm</string>
 
@@ -46,6 +48,8 @@
     <string name="_6">6</string>
     <string name="_7">7</string>
     <string name="_8">8</string>
+    <string name="_9">9</string>
+    <string name="_10">10</string>
     <string name="okay">Okay</string>
     <string name="auto_show_keyboard">Auto show keyboard</string>
     <string name="hide">Hide</string>
@@ -74,7 +78,11 @@
     <string name="rate_us_message">Hi, you won\'t see this message again.
         \n\nIf you\'re finding Sakinah Launcher useful, could you please leave a 5-star review? It\'ll mean the world to us. Thank you!</string>
     <string name="share_message">We need your help! We believe everyone should know about Sakinah Launcher and its benefits, but we can\'t do it alone.
-        \n\nCould you please share Sakinah Launcher with your friends, family, and followers? Thank you for your support! ❤</string>
+        \n\nCould you please share Sakinah Launcher with your friends, family, and followers? Thank you for your support!</string>
+    <string name="thank_you">Thank you!</string>
+    <string name="mindful_badge">Mindful</string>
+    <string name="mindful_badge_desc">Mindful launch is on for this app</string>
+    <string name="mindful_not_selected_desc">Not selected for mindful launch</string>
     <!--    <string name="share_message">Your monthly reminder - you should use your phone, not the other way round. Stay strong. You\'re doing great!-->
     <!--         \n\nIf you have a moment to spare, could you please share Sakinah Launcher with others? Sakinah Launcher needs people. More importantly, people need Sakinah Launcher.</string>-->
     <string name="keyboard_message">Hi, keyboard is the fastest way to find and launch apps in Sakinah Launcher. Can we request you to keep this On for a few more days and then decide?
@@ -232,8 +240,7 @@
     <string name="prayer_isha">Isha</string>
     <string name="dzikir_pagi">Morning dhikr</string>
     <string name="dzikir_petang">Evening dhikr</string>
-    <string name="dzikir_pagi_icon" translatable="false">☀</string>
-    <string name="dzikir_petang_icon" translatable="false">☾</string>
+    <string name="dzikir_section_title">Dzikir</string>
     <string name="dhikr_counter" formatted="false">%1$d / %2$d</string>
     <string name="dhikr_repetition" formatted="false">Read %1$d times</string>
     <string name="dhikr_position" formatted="false">%1$d of %2$d</string>
@@ -245,8 +252,53 @@
     <string name="dzikir_source">Source: almanhaj.or.id</string>
     <string name="dzikir_morning_summary" formatted="false">%1$d readings</string>
     <string name="dzikir_evening_summary" formatted="false">%1$d readings</string>
+    <string name="dhikr_readings_short">Readings</string>
     <string name="language">Language</string>
     <string name="language_english">English</string>
     <string name="language_indonesian">Indonesian</string>
     <string name="muslim" translatable="false">Muslim</string>
+
+    <!-- B1: Mindful launch -->
+    <string name="mindful_launch">Mindful launch</string>
+    <string name="mindful_launch_summary">Pause before opening apps you mark as distracting, so you can change your mind.</string>
+    <string name="mindful_launch_master_toggle">Mindful launch</string>
+    <string name="mindful_launch_delay">Countdown length</string>
+    <string name="mindful_launch_delay_3">3 seconds</string>
+    <string name="mindful_launch_delay_4">4 seconds</string>
+    <string name="mindful_launch_delay_5">5 seconds</string>
+    <string name="mindful_launch_delay_preview">Countdown: %1$d seconds</string>
+    <string name="mindful_launch_opt_in">Pause before opening</string>
+    <string name="mindful_launch_opt_in_add">Add apps to pause before opening</string>
+    <string name="mindful_launch_opt_in_empty">No apps marked yet.\n\nLong-press any app in the app list and choose “Pause before opening” to mark it.</string>
+    <string name="mindful_launch_hint">Opening soon. Take a breath. You can still cancel.</string>
+    <string name="mindful_cancel">Cancel launch</string>
+    <string name="mindful_cancel_action">Cancel</string>
+    <string name="mindful_launch_cancelled">Launch cancelled</string>
+    <string name="mindful_on">Pausing</string>
+    <string name="mindful_added">Will pause before opening</string>
+    <string name="mindful_removed">No longer pauses</string>
+
+    <!-- B2: Daily screen-time goal -->
+    <string name="screen_time_goal">Daily screen-time goal</string>
+    <string name="screen_time_goal_summary">Set a daily limit and get reminded when you reach it.</string>
+    <string name="screen_time_goal_target">Daily goal</string>
+    <string name="screen_time_goal_off">Off</string>
+    <string name="screen_time_goal_set">Set goal</string>
+    <string name="screen_time_goal_progress">Goal progress: %1$s of %2$s</string>
+    <string name="screen_time_goal_reached_title">Daily screen-time goal reached</string>
+    <string name="screen_time_goal_reached_text">You\'ve used %1$s today, %2$s of your goal. Time for a break?</string>
+    <string name="screen_time_goal_missed_title">Daily screen-time goal missed</string>
+    <string name="screen_time_goal_missed_text">You did not reach your %1$s goal today. Tomorrow is a new day.</string>
+    <string name="screen_time_goal_channel">Screen-time goal</string>
+
+    <!-- C2: Export / import configuration -->
+    <string name="backup_restore">Backup &amp; restore</string>
+    <string name="export_config">Export settings</string>
+    <string name="import_config">Import settings</string>
+    <string name="export_config_done">Settings exported</string>
+    <string name="import_config_done">Settings imported</string>
+    <string name="import_config_invalid">That file is not a valid Sakinah Launcher backup</string>
+    <string name="import_config_confirm_title">Import settings?</string>
+    <string name="import_config_confirm_message">This replaces your current settings, notes and to-dos with the contents of the backup file.</string>
+    <string name="import_config_confirm_import">Import</string>
 </resources>

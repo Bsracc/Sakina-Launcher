@@ -164,12 +164,16 @@ class MainActivity : AppCompatActivity() {
     override fun onStart() {
         super.onStart()
         restartLauncherOrCheckTheme()
+        viewModel.syncScreenTimeGoalWorker()
     }
 
     override fun onResume() {
         super.onResume()
         isResumed = true
         viewModel.isPrivateSpaceToggling = false
+        // Re-evaluate the daily screen-time goal while the launcher is visible
+        // (permission + usage window permitting).
+        viewModel.checkScreenTimeGoal()
         // Background is applied in onCreate and explicit preference/permission callbacks.
         // Reloading WallpaperManager on every launcher resume causes visible Home jank.
     }
@@ -241,6 +245,17 @@ class MainActivity : AppCompatActivity() {
         viewModel.checkForMessages.observe(this) {
             checkForMessages()
         }
+        viewModel.screenTimeGoalEvent.observe(this) {
+            it?.let { message ->
+                binding.tvTitle.text = getString(R.string.screen_time_goal)
+                binding.tvMessage.text = message
+                binding.tvAction.text = getString(R.string.okay)
+                binding.tvAction.setOnClickListener {
+                    binding.messageLayout.visibility = View.GONE
+                }
+                binding.messageLayout.visibility = View.VISIBLE
+            }
+        }
         viewModel.showDialog.observe(this) {
             when (it) {
                 Constants.Dialog.ABOUT -> {
@@ -263,7 +278,7 @@ class MainActivity : AppCompatActivity() {
                     prefs.userState = Constants.UserState.RATE
                     showMessageDialog(R.string.hey, R.string.review_message, R.string.leave_a_review) {
                         prefs.rateClicked = true
-                        showToast("😇❤️")
+                        showToast(getString(R.string.thank_you))
                         rateApp()
                     }
                 }
@@ -272,7 +287,7 @@ class MainActivity : AppCompatActivity() {
                     prefs.userState = Constants.UserState.SHARE
                     showMessageDialog(R.string.app_name, R.string.rate_us_message, R.string.rate_now) {
                         prefs.rateClicked = true
-                        showToast("🤩❤️")
+                        showToast(getString(R.string.thank_you))
                         rateApp()
                     }
                 }
@@ -280,7 +295,7 @@ class MainActivity : AppCompatActivity() {
                 Constants.Dialog.SHARE -> {
                     prefs.shareShownTime = System.currentTimeMillis()
                     showMessageDialog(R.string.hey, R.string.share_message, R.string.share_now) {
-                        showToast("😊❤️")
+                        showToast(getString(R.string.thank_you))
                         shareApp()
                     }
                 }

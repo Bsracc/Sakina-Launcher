@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Mindful picker checkbox. Two states:
+   - not selected: transparent oval with a hairline glass ring
+   - selected: filled glassActive oval (inverted ink pairs with the inverse check
+     glyph, same as every other active element in the glass system)
+  Keyed to state_selected because the host is a plain View, not a Checkable.
+-->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_selected="true">
+        <shape android:shape="oval">
+            <solid android:color="?attr/glassActive" />
+        </shape>
+    </item>
+    <item>
+        <shape android:shape="oval">
+            <solid android:color="@android:color/transparent" />
+            <stroke
+                android:width="1dp"
+                android:color="?attr/glassHairline" />
+        </shape>
+    </item>
+</selector>

@@ -18,6 +18,7 @@ import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.bundleOf
+import androidx.core.view.doOnLayout
 import androidx.core.view.isVisible
 import androidx.core.view.setPadding
 import androidx.fragment.app.Fragment
@@ -33,6 +34,7 @@ import app.sakinalauncher.data.Prefs
 import app.sakinalauncher.databinding.FragmentHomeBinding
 import app.sakinalauncher.helper.appUsagePermissionGranted
 import app.sakinalauncher.helper.FontHelper
+import app.sakinalauncher.helper.ScreenTimeGoal
 import app.sakinalauncher.helper.dpToPx
 import app.sakinalauncher.helper.expandNotificationDrawer
 import app.sakinalauncher.helper.getChangedAppTheme
@@ -164,6 +166,8 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
             R.id.homeApp6 -> showAppList(Constants.FLAG_SET_HOME_APP_6, prefs.appName6.isNotEmpty(), true)
             R.id.homeApp7 -> showAppList(Constants.FLAG_SET_HOME_APP_7, prefs.appName7.isNotEmpty(), true)
             R.id.homeApp8 -> showAppList(Constants.FLAG_SET_HOME_APP_8, prefs.appName8.isNotEmpty(), true)
+            R.id.homeApp9 -> showAppList(Constants.FLAG_SET_HOME_APP_9, prefs.appName9.isNotEmpty(), true)
+            R.id.homeApp10 -> showAppList(Constants.FLAG_SET_HOME_APP_10, prefs.appName10.isNotEmpty(), true)
             R.id.clock -> {
                 showAppList(Constants.FLAG_SET_CLOCK_APP)
                 prefs.clockAppPackage = ""
@@ -243,6 +247,8 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
         binding.homeApp6.setOnTouchListener(getViewSwipeTouchListener(context, binding.homeApp6))
         binding.homeApp7.setOnTouchListener(getViewSwipeTouchListener(context, binding.homeApp7))
         binding.homeApp8.setOnTouchListener(getViewSwipeTouchListener(context, binding.homeApp8))
+        binding.homeApp9.setOnTouchListener(getViewSwipeTouchListener(context, binding.homeApp9))
+        binding.homeApp10.setOnTouchListener(getViewSwipeTouchListener(context, binding.homeApp10))
     }
 
     private fun initClickListeners() {
@@ -276,6 +282,8 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
         binding.homeApp6.gravity = horizontalGravity
         binding.homeApp7.gravity = horizontalGravity
         binding.homeApp8.gravity = horizontalGravity
+        binding.homeApp9.gravity = horizontalGravity
+        binding.homeApp10.gravity = horizontalGravity
     }
 
     private fun populateDateTime() {
@@ -303,6 +311,9 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
 
         val isLandscape = resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
         val horizontalMargin = if (isLandscape) 64.dpToPx() else 10.dpToPx()
+        // Base offset below the clock block. With large system font scales the clock
+        // (60sp + date) grows past this offset, so placeScreenTimeBelowClock() re-anchors
+        // the meta lines under the measured clock height instead of overlapping it.
         val marginTop = if (isLandscape) {
             if (prefs.dateTimeVisibility == Constants.DateTime.DATE_ONLY) 36.dpToPx() else 56.dpToPx()
         } else {
@@ -319,6 +330,64 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
         }
         binding.tvScreenTime.layoutParams = params
         binding.tvScreenTime.setPadding(10.dpToPx())
+        placeScreenTimeBelowClock(marginTop, horizontalMargin)
+
+        // B2: daily screen-time goal progress line (shown only when a goal is set)
+        val goalMinutes = prefs.dailyScreenTimeGoalMinutes
+        if (goalMinutes > 0) {
+            val used = viewModel.getTodayUsageMillis()
+            if (used != null) {
+                val progress = ScreenTimeGoal.progress(prefs, used)
+                binding.tvScreenTimeGoal.text = getString(
+                    R.string.screen_time_goal_progress,
+                    ScreenTimeGoal.formatUsed(requireContext(), used),
+                    ScreenTimeGoal.formatGoal(goalMinutes),
+                )
+                binding.tvScreenTimeGoal.visibility = View.VISIBLE
+                val goalParams = FrameLayout.LayoutParams(
+                    FrameLayout.LayoutParams.WRAP_CONTENT,
+                    FrameLayout.LayoutParams.WRAP_CONTENT
+                ).apply {
+                    topMargin = marginTop + 36.dpToPx()
+                    marginStart = horizontalMargin
+                    marginEnd = horizontalMargin
+                    gravity = if (prefs.homeAlignment == Gravity.END) Gravity.START else Gravity.END
+                }
+                binding.tvScreenTimeGoal.layoutParams = goalParams
+                binding.tvScreenTimeGoal.setPadding(10.dpToPx(), 0, 10.dpToPx(), 6.dpToPx())
+            }
+        } else {
+            binding.tvScreenTimeGoal.visibility = View.GONE
+        }
+    }
+
+    /**
+     * Re-anchors the screen-time meta lines below the measured clock block. The XML
+     * defaults (72dp / 108dp) assume the default font scale; at larger scales the
+     * 60sp clock outgrows them and the meta lines would overlap the clock text. This
+     * waits for one layout pass, reads the real clock bottom, and only bumps the
+     * offset when the clock is taller than the base offset (never the reverse, so the
+     * normal look is untouched).
+     */
+    private fun placeScreenTimeBelowClock(baseMarginTop: Int, horizontalMargin: Int) {
+        binding.dateTimeLayout.doOnLayout { dt ->
+            if (dt.visibility != View.VISIBLE) return@doOnLayout
+            val clockBottom = dt.top + dt.height
+            val neededTop = clockBottom + 12.dpToPx()
+            if (neededTop <= baseMarginTop) return@doOnLayout
+            val params = binding.tvScreenTime.layoutParams as FrameLayout.LayoutParams
+            if (params.topMargin < neededTop) {
+                params.topMargin = neededTop
+                binding.tvScreenTime.layoutParams = params
+            }
+            val goalParams = binding.tvScreenTimeGoal.layoutParams as? FrameLayout.LayoutParams
+            if (goalParams != null && binding.tvScreenTimeGoal.visibility == View.VISIBLE) {
+                if (goalParams.topMargin < neededTop + 36.dpToPx()) {
+                    goalParams.topMargin = neededTop + 36.dpToPx()
+                    binding.tvScreenTimeGoal.layoutParams = goalParams
+                }
+            }
+        }
     }
 
     private fun populateHomeScreen(appCountUpdated: Boolean) {
@@ -385,6 +454,20 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
             prefs.appName8 = ""
             prefs.appPackage8 = ""
         }
+        if (homeAppsNum == 8) return
+
+        binding.homeApp9.visibility = View.VISIBLE
+        if (!setHomeAppText(binding.homeApp9, prefs.appName9, prefs.appPackage9, prefs.appUser9, prefs.isShortcut9, prefs.shortcutId9)) {
+            prefs.appName9 = ""
+            prefs.appPackage9 = ""
+        }
+        if (homeAppsNum == 9) return
+
+        binding.homeApp10.visibility = View.VISIBLE
+        if (!setHomeAppText(binding.homeApp10, prefs.appName10, prefs.appPackage10, prefs.appUser10, prefs.isShortcut10, prefs.shortcutId10)) {
+            prefs.appName10 = ""
+            prefs.appPackage10 = ""
+        }
     }
 
     private fun setHomeAppText(
@@ -446,6 +529,8 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
         binding.homeApp6.visibility = View.GONE
         binding.homeApp7.visibility = View.GONE
         binding.homeApp8.visibility = View.GONE
+        binding.homeApp9.visibility = View.GONE
+        binding.homeApp10.visibility = View.GONE
     }
 
     private fun launchAppOrShortcut(

@@ -35,6 +35,7 @@
 
         <item name="primaryColor">@color/white</item>
         <item name="primaryInverseColor">@color/whiteInverse</item>
+        <item name="dangerColor">@color/dangerRedBright</item>
         <item name="primaryTextShadowColor">@color/whiteInverseTrans30</item>
         <item name="primaryColorTrans50">@color/whiteTrans50</item>
         <item name="primaryColorTrans80">@color/whiteTrans80</item>

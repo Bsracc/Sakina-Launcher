@@ -6,19 +6,98 @@
 -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
 
-    <TextView
-        android:id="@+id/appTitle"
-        style="@style/TextLarge"
+    <!--
+      Label column and mindful check share one horizontal row, so the label can
+      never run under the check (the old sibling-in-FrameLayout layout let the
+      match_parent label slide beneath the 48dp check at the end). The check
+      collapses to zero width when gone, so plain rows keep the full width.
+    -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:maxLines="1"
-        android:paddingHorizontal="24dp"
-        android:paddingVertical="7dp"
-        android:text="@string/app"
-        android:textSize="21sp" />
+        android:minHeight="52dp"
+        android:orientation="horizontal">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/appTitle"
+                style="@style/TextLarge"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:maxLines="1"
+                android:paddingHorizontal="24dp"
+                android:paddingTop="7dp"
+                android:paddingBottom="1dp"
+                android:text="@string/app"
+                android:textSize="21sp" />
+
+            <TextView
+                android:id="@+id/appTitleSub"
+                style="@style/TextSmall"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="24dp"
+                android:layout_marginEnd="24dp"
+                android:layout_marginBottom="6dp"
+                android:ellipsize="middle"
+                android:maxLines="1"
+                android:textColor="?attr/primaryColorTrans80"
+                android:visibility="gone"
+                tools:ignore="UnusedAttribute"
+                tools:text="com.example.settings" />
+
+        </LinearLayout>
+
+        <!--
+          Mindful-launch indicator. In the mindful picker (FLAG_SET_MINDFUL_APP) it
+          is a checkbox: hairline ring when not opted in, filled glassActive with
+          an inverse check glyph when opted in. In the normal drawer it is a quiet
+          check glyph that just tells "this app pauses", without the old all-caps
+          text tag.
+
+          Height is wrap_content (not a fixed 48dp) so a row with the indicator
+          is exactly as tall as a row without it: the indicator only adds width,
+          never row height. A fixed 48dp here made mindful rows taller than plain
+          rows, which broke the vertical rhythm of the list.
+        -->
+        <FrameLayout
+            android:id="@+id/mindfulCheck"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:layout_marginEnd="8dp"
+            android:minWidth="48dp"
+            android:minHeight="48dp">
+
+            <View
+                android:id="@+id/mindfulCheckBg"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:layout_gravity="center"
+                android:background="@drawable/bg_mindful_check" />
+
+            <ImageView
+                android:id="@+id/mindfulCheckGlyph"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:layout_gravity="center"
+                android:importantForAccessibility="no"
+                android:src="@drawable/ic_check_inverse"
+                android:visibility="gone"
+                app:tint="?attr/primaryInverseColor" />
+
+        </FrameLayout>
+
+    </LinearLayout>
 
     <ImageView
         android:id="@+id/otherProfileIndicator"

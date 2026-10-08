@@ -21,6 +21,9 @@ import app.sakinalauncher.data.AppModel
 import app.sakinalauncher.data.Constants
 import app.sakinalauncher.data.Prefs
 import app.sakinalauncher.helper.SingleLiveEvent
+import app.sakinalauncher.helper.MindfulLaunchHelper
+import app.sakinalauncher.helper.ScreenTimeGoal
+import app.sakinalauncher.helper.ScreenTimeGoalWorker
 import app.sakinalauncher.helper.WallpaperWorker
 import app.sakinalauncher.helper.formattedTimeSpent
 import app.sakinalauncher.helper.getAppsList
@@ -54,7 +57,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val launcherResetFailed = MutableLiveData<Boolean>()
     val homeAppAlignment = MutableLiveData<Int>()
     val screenTimeValue = MutableLiveData<String>()
+    val screenTimeGoalEvent = SingleLiveEvent<String>()
     private var screenTimeJob: Job? = null
+    private var screenTimeGoalJob: Job? = null
     private var appLoadJob: Job? = null
     private var hiddenAppLoadJob: Job? = null
     private var privateSpaceLoadJob: Job? = null
@@ -70,6 +75,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val checkForMessages = SingleLiveEvent<Unit?>()
     val resetLauncherLiveData = SingleLiveEvent<Unit?>()
     val showRecentApps = SingleLiveEvent<Unit?>()
+
+    /**
+     * B1: request for the UI layer to show the mindful countdown dialog with an
+     * Activity context (a Dialog cannot be attached to the application context —
+     * that throws BadTokenException and force-closes the launcher).
+     */
+    data class MindfulLaunchRequest(
+        val appLabel: String,
+        val component: ComponentName,
+        val userHandle: UserHandle,
+    )
+    val mindfulLaunchEvent = SingleLiveEvent<MindfulLaunchRequest>()
 
     fun selectedApp(appModel: AppModel, flag: Int) {
         if (appModel is AppModel.PrivateSpaceHeader) return
@@ -98,6 +115,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             Constants.FLAG_SET_HOME_APP_6 -> saveHomeApp(appModel, 6)
             Constants.FLAG_SET_HOME_APP_7 -> saveHomeApp(appModel, 7)
             Constants.FLAG_SET_HOME_APP_8 -> saveHomeApp(appModel, 8)
+            Constants.FLAG_SET_HOME_APP_9 -> saveHomeApp(appModel, 9)
+            Constants.FLAG_SET_HOME_APP_10 -> saveHomeApp(appModel, 10)
 
             Constants.FLAG_SET_SWIPE_LEFT_APP -> saveSwipeApp(appModel, isLeft = true)
             Constants.FLAG_SET_SWIPE_RIGHT_APP -> saveSwipeApp(appModel, isLeft = false)
@@ -198,6 +217,24 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         prefs.isShortcut8 = false
                         prefs.shortcutId8 = ""
                     }
+
+                    9 -> {
+                        prefs.appName9 = appModel.appLabel
+                        prefs.appPackage9 = appModel.appPackage
+                        prefs.appUser9 = appModel.user.toString()
+                        prefs.appActivityClassName9 = appModel.activityClassName
+                        prefs.isShortcut9 = false
+                        prefs.shortcutId9 = ""
+                    }
+
+                    10 -> {
+                        prefs.appName10 = appModel.appLabel
+                        prefs.appPackage10 = appModel.appPackage
+                        prefs.appUser10 = appModel.user.toString()
+                        prefs.appActivityClassName10 = appModel.activityClassName
+                        prefs.isShortcut10 = false
+                        prefs.shortcutId10 = ""
+                    }
                 }
             }
 
@@ -273,6 +310,24 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         prefs.appActivityClassName8 = null
                         prefs.isShortcut8 = true
                         prefs.shortcutId8 = appModel.shortcutId
+                    }
+
+                    9 -> {
+                        prefs.appName9 = appModel.appLabel
+                        prefs.appPackage9 = appModel.appPackage
+                        prefs.appUser9 = appModel.user.toString()
+                        prefs.appActivityClassName9 = null
+                        prefs.isShortcut9 = true
+                        prefs.shortcutId9 = appModel.shortcutId
+                    }
+
+                    10 -> {
+                        prefs.appName10 = appModel.appLabel
+                        prefs.appPackage10 = appModel.appPackage
+                        prefs.appUser10 = appModel.user.toString()
+                        prefs.appActivityClassName10 = null
+                        prefs.isShortcut10 = true
+                        prefs.shortcutId10 = appModel.shortcutId
                     }
                 }
             }
@@ -387,6 +442,34 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             }.also { prefs.updateAppActivityClassName(packageName, it.className) }
         }
 
+        // Mindful launch (B1): a cancellable countdown before an opted-in app opens.
+        // Skipped entirely when the package is a system/emergency target (see
+        // MindfulLaunchHelper.ALWAYS_INSTANT), when mindful launch is off, or when the
+        // app has not opted in.
+        val appLabel = activityInfo.firstOrNull { it.componentName.className == component.className }
+            ?.label?.toString()
+            ?: packageName
+        if (MindfulLaunchHelper.isMindful(appContext, prefs, packageName)) {
+            // The countdown dialog must be shown from the UI layer with an Activity
+            // context — posting a request here avoids the BadTokenException that
+            // force-closed the launcher when the dialog was built on appContext.
+            mindfulLaunchEvent.value = MindfulLaunchRequest(
+                appLabel = appLabel,
+                component = component,
+                userHandle = userHandle,
+            )
+            return
+        }
+
+        launchComponent(component, userHandle)
+    }
+
+    /**
+     * B1: launches the resolved component directly. Called by the UI layer after
+     * the mindful countdown completes (with an Activity context on the dialog).
+     */
+    fun launchComponent(component: ComponentName, userHandle: UserHandle) {
+        val launcher = appContext.getSystemService(Context.LAUNCHER_APPS_SERVICE) as LauncherApps
         try {
             launcher.startMainActivity(component, userHandle, null, null)
         } catch (e: SecurityException) {
@@ -444,6 +527,89 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         WorkManager.getInstance(appContext).cancelUniqueWork(Constants.WALLPAPER_WORKER_NAME)
         prefs.dailyWallpaperUrl = ""
         prefs.dailyWallpaper = false
+    }
+
+    /**
+     * B1: toggle mindful-launch opt-in for one package. Returns the new state.
+     * Never touches system/emergency packages — [MindfulLaunchHelper.isMindful]
+     * already excludes them, and the UI hides them via [isMindfulEligible].
+     */
+    fun toggleMindfulApp(packageName: String): Boolean {
+        val current = prefs.mindfulApps
+        val enabled = !current.contains(packageName)
+        if (enabled) current.add(packageName) else current.remove(packageName)
+        prefs.mindfulApps = current
+        return enabled
+    }
+
+    fun isMindfulApp(packageName: String): Boolean = prefs.mindfulApps.contains(packageName)
+
+    /**
+     * B2: schedule or cancel the screen-time goal worker. Called whenever the goal
+     * minutes change, and on launcher start, so the worker is always in sync.
+     */
+    fun syncScreenTimeGoalWorker() {
+        val workManager = WorkManager.getInstance(appContext)
+        if (prefs.dailyScreenTimeGoalMinutes <= 0) {
+            workManager.cancelUniqueWork(Constants.SCREEN_TIME_GOAL_WORKER_NAME)
+            return
+        }
+        val request = PeriodicWorkRequestBuilder<ScreenTimeGoalWorker>(30, TimeUnit.MINUTES).build()
+        workManager.enqueueUniquePeriodicWork(
+            Constants.SCREEN_TIME_GOAL_WORKER_NAME,
+            ExistingPeriodicWorkPolicy.UPDATE,
+            request
+        )
+    }
+
+    /** B2: check the goal against today's usage; fires the in-launcher dialog notice. */
+    fun checkScreenTimeGoal() {
+        if (prefs.dailyScreenTimeGoalMinutes <= 0) return
+        screenTimeGoalJob?.cancel()
+        screenTimeGoalJob = viewModelScope.launch {
+            val usedMillis = withContext(Dispatchers.Default) {
+                val eventLogWrapper = EventLogWrapper(appContext)
+                val calendar = Calendar.getInstance().apply {
+                    set(Calendar.HOUR_OF_DAY, 0)
+                    set(Calendar.MINUTE, 0)
+                    set(Calendar.SECOND, 0)
+                    set(Calendar.MILLISECOND, 0)
+                }
+                val endTime = System.currentTimeMillis()
+                eventLogWrapper.aggregateSimpleUsageStats(
+                    eventLogWrapper.aggregateForegroundStats(
+                        eventLogWrapper.getForegroundStatsByTimestamps(calendar.timeInMillis, endTime)
+                    )
+                )
+            }
+            when (ScreenTimeGoal.checkNotice(prefs, usedMillis)) {
+                "reached" -> screenTimeGoalEvent.postValue(
+                    appContext.getString(
+                        R.string.screen_time_goal_reached_text,
+                        appContext.formattedTimeSpent(usedMillis),
+                        ScreenTimeGoal.formatGoal(prefs.dailyScreenTimeGoalMinutes),
+                    )
+                )
+
+                "missed" -> screenTimeGoalEvent.postValue(
+                    appContext.getString(
+                        R.string.screen_time_goal_missed_text,
+                        ScreenTimeGoal.formatGoal(prefs.dailyScreenTimeGoalMinutes),
+                    )
+                )
+
+                else -> {}
+            }
+        }
+    }
+
+    /** B2: today's used millis, or null when usage permission is missing. */
+    fun getTodayUsageMillis(): Long? = ScreenTimeGoal.getTodaysUsageMillis(appContext)
+
+    /** B2: goal progress 0f..1f for the current day (0 when disabled). */
+    fun screenTimeGoalProgress(): Float {
+        val used = getTodayUsageMillis() ?: return 0f
+        return ScreenTimeGoal.progress(prefs, used)
     }
 
     fun updateHomeAlignment(gravity: Int) {
