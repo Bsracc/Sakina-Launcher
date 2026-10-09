@@ -1,0 +1,123 @@
+name: Build & Publish Release APK
+
+on:
+  push:
+    branches: [ master ]
+  workflow_dispatch:
+
+concurrency:
+  group: apk-release
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  build-release:
+    name: Build and publish
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      # The repo signs local/CI builds with the Android debug key (no release
+      # keystore secrets configured). This keeps the signature identical to the
+      # APKs already distributed, so users can update in place.
+      - name: Generate debug keystore
+        run: |
+          mkdir -p "$HOME/.android"
+          if [ ! -f "$HOME/.android/debug.keystore" ]; then
+            keytool -genkeypair -v \
+              -keystore "$HOME/.android/debug.keystore" \
+              -storepass android \
+              -keypass android \
+              -alias androiddebugkey \
+              -keyalg RSA \
+              -keysize 2048 \
+              -validity 10000 \
+              -dname "CN=Android Debug,O=Android,C=US"
+          fi
+
+      - name: Run unit tests
+        run: ./gradlew testDebugUnitTest --no-daemon --stacktrace
+
+      - name: Build release APK
+        run: ./gradlew assembleRelease --no-daemon --stacktrace
+
+      - name: Get version info
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION_NAME=$(sed -nE 's/^[[:space:]]*versionName[[:space:]]+"([^"]+)".*/\1/p' app/build.gradle)
+          VERSION_CODE=$(sed -nE 's/^[[:space:]]*versionCode[[:space:]]+([0-9]+).*/\1/p' app/build.gradle)
+          test -n "$VERSION_NAME" && test -n "$VERSION_CODE"
+          TAG="v${VERSION_NAME}-build.${GITHUB_RUN_NUMBER}"
+          echo "version_name=$VERSION_NAME" >> "$GITHUB_OUTPUT"
+          echo "version_code=$VERSION_CODE" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "apk_name=Sakinah-Launcher-${VERSION_NAME}-build.${GITHUB_RUN_NUMBER}.apk" >> "$GITHUB_OUTPUT"
+
+      - name: Stage and verify APK
+        id: apk
+        shell: bash
+        env:
+          APK_NAME: ${{ steps.version.outputs.apk_name }}
+        run: |
+          set -euo pipefail
+          source_apk="app/build/outputs/apk/release/app-release.apk"
+          test -f "$source_apk"
+          mkdir -p dist
+          output_apk="dist/$APK_NAME"
+          cp "$source_apk" "$output_apk"
+          apksigner="$(find "$ANDROID_HOME/build-tools" -mindepth 2 -maxdepth 2 -type f -name apksigner | sort -V | tail -n 1)"
+          test -x "$apksigner"
+          "$apksigner" verify --verbose --print-certs "$output_apk"
+          sha256sum "$output_apk" > "${output_apk}.sha256"
+          echo "path=$output_apk" >> "$GITHUB_OUTPUT"
+          echo "checksum=${output_apk}.sha256" >> "$GITHUB_OUTPUT"
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.version.outputs.apk_name }}
+          path: |
+            ${{ steps.apk.outputs.path }}
+            ${{ steps.apk.outputs.checksum }}
+          retention-days: 90
+          if-no-files-found: error
+
+      - name: Publish GitHub Release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+          VERSION_NAME: ${{ steps.version.outputs.version_name }}
+          VERSION_CODE: ${{ steps.version.outputs.version_code }}
+          APK_PATH: ${{ steps.apk.outputs.path }}
+          CHECKSUM_PATH: ${{ steps.apk.outputs.checksum }}
+        run: |
+          set -euo pipefail
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "::error::Release $TAG already exists"
+            exit 1
+          fi
+          gh release create "$TAG" \
+            "$APK_PATH" \
+            "$CHECKSUM_PATH" \
+            --target "$GITHUB_SHA" \
+            --title "Sakinah Launcher $VERSION_NAME (build $GITHUB_RUN_NUMBER)" \
+            --notes "Version: $VERSION_NAME (code: $VERSION_CODE). Built by GitHub Actions from commit $GITHUB_SHA. Files: APK + .sha256 checksum. Install: download APK, enable unknown sources, install, set as default launcher."
