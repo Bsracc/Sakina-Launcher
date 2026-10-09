@@ -65,7 +65,8 @@ jobs:
           VERSION_NAME=$(sed -nE 's/^[[:space:]]*versionName[[:space:]]+"([^"]+)".*/\1/p' app/build.gradle)
           VERSION_CODE=$(sed -nE 's/^[[:space:]]*versionCode[[:space:]]+([0-9]+).*/\1/p' app/build.gradle)
           test -n "$VERSION_NAME" && test -n "$VERSION_CODE"
-          TAG="v${VERSION_NAME}-build.${GITHUB_RUN_NUMBER}"
+          # versionName already includes the "v" prefix ("v6.6.4"); keep it once.
+          TAG="${VERSION_NAME}-build.${GITHUB_RUN_NUMBER}"
           echo "version_name=$VERSION_NAME" >> "$GITHUB_OUTPUT"
           echo "version_code=$VERSION_CODE" >> "$GITHUB_OUTPUT"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
