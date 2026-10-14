@@ -49,6 +49,7 @@ import app.sakinalauncher.helper.resetLauncherViaFakeActivity
 import app.sakinalauncher.helper.shareApp
 import app.sakinalauncher.helper.showLauncherSelector
 import app.sakinalauncher.helper.showToast
+import app.sakinalauncher.helper.SoundEffects
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -111,6 +112,9 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         applySolidBackground()
+
+        // Preload the sound pool so the first tap/launch is not silent.
+        SoundEffects.preload(this)
 
         navController = this.findNavController(R.id.nav_host_fragment)
         viewModel = ViewModelProvider(this)[MainViewModel::class.java]

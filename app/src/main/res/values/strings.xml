@@ -262,6 +262,8 @@
     <string name="mindful_launch">Mindful launch</string>
     <string name="mindful_launch_summary">Pause before opening apps you mark as distracting, so you can change your mind.</string>
     <string name="mindful_launch_master_toggle">Mindful launch</string>
+    <string name="sound_effects_label">Sound effects</string>
+    <string name="sound_effects_summary">Soft clicks and chimes for launches and toggles.</string>
     <string name="mindful_launch_delay">Countdown length</string>
     <string name="mindful_launch_delay_3">3 seconds</string>
     <string name="mindful_launch_delay_4">4 seconds</string>

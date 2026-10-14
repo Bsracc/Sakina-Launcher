@@ -59,6 +59,7 @@ import app.sakinalauncher.helper.isTablet
 import app.sakinalauncher.helper.openAppInfo
 import app.sakinalauncher.helper.openUrl
 import app.sakinalauncher.helper.PrayerLocationHelper
+import app.sakinalauncher.helper.SoundEffects
 import app.sakinalauncher.helper.showAppListDialog
 import app.sakinalauncher.helper.showToast
 import app.sakinalauncher.listener.DeviceAdmin
@@ -137,6 +138,7 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
         populateKeyboardText()
         populateScreenTimeOnOff()
         populateMindfulSettings()
+        populateSoundEffectsToggle()
         populateScreenTimeGoal()
         populateLockSettings()
         populateHomeButtonRecents()
@@ -188,6 +190,9 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
     }
 
     override fun onClick(view: View) {
+        // Soft click feedback for every settings row (toggle sounds are handled
+        // by their own handlers; this covers plain rows and pickers).
+        if (view.id != R.id.soundEffectsToggle) SoundEffects.toggle(requireContext())
         binding.appsNumSelectLayout.visibility = View.GONE
         binding.appsNumLabel.visibility = View.VISIBLE
         binding.homeAppsNum.visibility = View.VISIBLE
@@ -214,6 +219,7 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
             R.id.moreFeatures -> requireContext().openUrl("https://github.com/Bsraccc1/Sakina-Launcher")
             R.id.screenTimeOnOff -> viewModel.showDialog.postValue(Constants.Dialog.DIGITAL_WELLBEING)
             R.id.mindfulLaunchToggle -> toggleMindfulLaunch()
+            R.id.soundEffectsToggle -> toggleSoundEffects()
             R.id.mindfulLaunchDelay -> showMindfulDelayPicker()
             R.id.mindfulAppsValue -> showMindfulAppsPicker()
             R.id.screenTimeGoalValue -> showScreenTimeGoalPicker()
@@ -341,6 +347,7 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
         binding.homeAppsNum.setOnClickListener(this)
         binding.screenTimeOnOff.setOnClickListener(this)
         binding.mindfulLaunchToggle.setOnClickListener(this)
+        binding.soundEffectsToggle.setOnClickListener(this)
         binding.mindfulLaunchDelay.setOnClickListener(this)
         binding.mindfulAppsValue.setOnClickListener(this)
         binding.screenTimeGoalValue.setOnClickListener(this)
@@ -861,6 +868,19 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
         populateMindfulSettings()
     }
 
+    private fun populateSoundEffectsToggle() {
+        binding.soundEffectsToggle.text = onOff(prefs.soundEffectsEnabled)
+    }
+
+    private fun toggleSoundEffects() {
+        val newState = !prefs.soundEffectsEnabled
+        prefs.soundEffectsEnabled = newState
+        populateSoundEffectsToggle()
+        // Confirm the flip with the toggle tick only when sound is being turned ON
+        // (turning it off should be silent).
+        if (newState) SoundEffects.toggle(requireContext())
+    }
+
     private fun showMindfulDelayPicker() {
         val values = intArrayOf(3, 4, 5)
         val labels = listOf(
@@ -984,7 +1004,10 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
         // Returning from the mindful picker must refresh the count of selected apps
         // immediately — without this the number only updates after leaving Settings
         // and coming back (populateMindfulSettings runs on create only).
-        if (_binding != null) populateMindfulSettings()
+        if (_binding != null) {
+            populateMindfulSettings()
+            populateSoundEffectsToggle()
+        }
     }
 
     private fun populateWallpaperText() {

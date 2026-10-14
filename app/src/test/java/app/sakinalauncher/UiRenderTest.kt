@@ -100,10 +100,10 @@ class UiRenderTest {
             checkBg.isSelected = mindful
             glyph.visibility = if (mindful) View.VISIBLE else View.GONE
             row.findViewById<View>(R.id.otherProfileIndicator).visibility = View.GONE
-            container.addView(
-                row,
-                LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT),
-            )
+            // Add with the row's own layout params (fixed 52dp from XML) — passing
+            // explicit WRAP_CONTENT here would override the fixed height and make
+            // sublabel rows taller than plain rows again.
+            container.addView(row)
         }
         // Normal drawer: quiet check glyph only on opted-in apps.
         addRow("Instagram", mindful = true, picker = false)

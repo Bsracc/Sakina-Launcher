@@ -203,7 +203,7 @@
                     android:id="@+id/timerPause"
                     style="@style/TextSmallBold"
                     android:layout_width="92dp"
-                    android:layout_height="38dp"
+                    android:layout_height="42dp"
                     android:background="@drawable/bg_glass_inset"
                     android:gravity="center"
                     android:text="@string/pause" />
@@ -212,7 +212,7 @@
                     android:id="@+id/timerReset"
                     style="@style/TextSmallBold"
                     android:layout_width="92dp"
-                    android:layout_height="38dp"
+                    android:layout_height="42dp"
                     android:layout_marginStart="12dp"
                     android:background="@drawable/bg_glass_inset"
                     android:gravity="center"
