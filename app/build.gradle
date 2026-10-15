@@ -24,7 +24,7 @@ android {
         applicationId "app.sakinalauncher"
         minSdkVersion 24
         targetSdkVersion 36
-        versionCode 113
+        versionCode 114
         versionName "v6.6.4"
 
         resourceConfigurations += ["en", "in", "ar"]
