@@ -15,6 +15,7 @@ import android.os.SystemClock
 import android.view.Gravity
 import android.view.WindowManager
 import android.widget.TextView
+import androidx.core.app.NotificationCompat
 import app.sakinalauncher.R
 import app.sakinalauncher.data.Prefs
 import app.sakinalauncher.helper.SoundEffects
@@ -40,8 +41,8 @@ class TimerService : Service() {
         private const val CHANNEL_ID = "timer_countdown"
         private const val NOTIFICATION_ID = 1001
         private const val ACTION_START = "app.sakinalauncher.timer.START"
-        private const val ACTION_STOP = "app.sakinalauncher.timer.STOP"
         private const val OVERLAY_GRACE_MS = 1200L
+        const val EXTRA_SHOW_TIMER_DONE = "app.sakinalauncher.timer.SHOW_TIMER_DONE"
 
         /** Starts (or restarts) the foreground countdown service. */
         fun start(context: Context) {
@@ -50,7 +51,9 @@ class TimerService : Service() {
 
         /** Stops the service and removes its notification / overlay. Safe to call anytime. */
         fun stop(context: Context) {
-            context.startService(Intent(context, TimerService::class.java).setAction(ACTION_STOP))
+            // stopService directly — never startService from background (Android 8+
+            // throws IllegalStateException for background startService).
+            context.stopService(Intent(context, TimerService::class.java))
         }
     }
 
@@ -60,7 +63,6 @@ class TimerService : Service() {
     private var countdown: CountDownTimer? = null
     private var overlayView: android.view.View? = null
     private var overlayParams: WindowManager.LayoutParams? = null
-    private var finishedShown = false
     private var finishPending = false
 
     override fun onBind(intent: Intent?): IBinder? = null
@@ -72,17 +74,8 @@ class TimerService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        when (intent?.action) {
-            ACTION_STOP -> {
-                stopEverything()
-                stopSelf()
-                return START_NOT_STICKY
-            }
-            else -> {
-                startCountdown()
-                return START_STICKY
-            }
-        }
+        startCountdown()
+        return START_STICKY
     }
 
     private fun startCountdown() {
@@ -92,7 +85,6 @@ class TimerService : Service() {
             stopSelf()
             return
         }
-        finishedShown = false
         val remaining = (endElapsed - SystemClock.elapsedRealtime()).coerceAtLeast(0L)
         goForeground(remaining)
 
@@ -128,7 +120,7 @@ class TimerService : Service() {
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
         val timeLeft = formatTimer(remainingMillis)
-        return Notification.Builder(this, CHANNEL_ID)
+        return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle(getString(R.string.timer_notification_title))
             .setContentText(getString(R.string.timer_notification_message, timeLeft))
             .setSmallIcon(R.drawable.ic_play)
@@ -151,7 +143,6 @@ class TimerService : Service() {
 
     private fun onCountdownFinished() {
         countdown = null
-        finishedShown = true
         finishPending = true
 
         // Timer is already zeroed by TimerSession's onFinish when the panel was
@@ -176,9 +167,10 @@ class TimerService : Service() {
 
     private fun showOverlay() {
         if (!android.provider.Settings.canDrawOverlays(this)) {
-            // No overlay permission: fall back to a heads-up notification so the
-            // user still notices. The Settings row explains how to enable overlay.
-            showHeadsUp()
+            // No overlay permission: bring the launcher to front and let its own
+            // dialog handle "time's up" — guaranteed to work without any permission,
+            // and it also nudges the user toward granting overlay in Settings.
+            showFallbackActivity()
             return
         }
         val view = android.view.LayoutInflater.from(this).inflate(R.layout.dialog_timer_done, null)
@@ -190,20 +182,26 @@ class TimerService : Service() {
         negative.setText(R.string.timer_overlay_close)
 
         val lp = WindowManager.LayoutParams(
+            // Match parent width but let the card size itself; the card has
+            // padding and gravity center, so it stays a centered sheet, not a
+            // full-screen block.
             WindowManager.LayoutParams.MATCH_PARENT,
             WindowManager.LayoutParams.WRAP_CONTENT,
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+            // NOT_FOCUSABLE: don't steal keyboard focus. NOT_TOUCH_MODAL: touches
+            // outside the window pass through to the app behind (critical — the
+            // popup must not lock the whole screen).
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
             android.graphics.PixelFormat.TRANSLUCENT,
         ).apply {
             gravity = Gravity.CENTER
-            // Keep the popup readable regardless of what's behind it.
-            dimAmount = 0.35f
         }
 
         negative.setOnClickListener {
             dismissOverlay()
-            // Close: everything already zeroed; just dismiss.
+            // Close: everything already zeroed; stop the service entirely.
+            stopSelf()
         }
         positive.setOnClickListener {
             dismissOverlay()
@@ -223,28 +221,47 @@ class TimerService : Service() {
             overlayView = view
             overlayParams = lp
         } catch (e: Exception) {
-            // Overlay rejected for any reason — heads-up fallback.
-            showHeadsUp()
+            // Overlay rejected for any reason — launcher fallback.
+            showFallbackActivity()
         }
     }
 
-    private fun showHeadsUp() {
+    /**
+     * Timer finished with no overlay permission: surface a full-screen/heads-up
+     * notification (with the launcher's dialog as the tap target). Works on every
+     * Android version with zero extra permissions; the Settings row explains how
+     * to enable the true overlay popup.
+     */
+    private fun showFallbackActivity() {
+        // Background activity starts are restricted on Android 10+ for apps
+        // without overlay permission, so a notification with a full-screen intent
+        // is the reliable way to surface "time's up" over other apps. The
+        // launcher opens when the user taps it (or immediately for full-screen
+        // intents on devices that allow them).
         val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         val contentIntent = PendingIntent.getActivity(
             this,
             1,
-            Intent(this, MainActivity::class.java),
+            Intent(this, MainActivity::class.java).apply {
+                putExtra(EXTRA_SHOW_TIMER_DONE, true)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            },
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
-        val notification = Notification.Builder(this, CHANNEL_ID)
+        val notification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle(getString(R.string.timer_overlay_title))
             .setContentText(getString(R.string.timer_overlay_message))
             .setSmallIcon(R.drawable.ic_play)
             .setContentIntent(contentIntent)
             .setAutoCancel(true)
-            .setPriority(Notification.PRIORITY_HIGH)
+            .setPriority(NotificationCompat.PRIORITY_MAX)
+            .setCategory(NotificationCompat.CATEGORY_ALARM)
+            .setFullScreenIntent(contentIntent, true)
             .build()
-        nm.notify(NOTIFICATION_ID + 1, notification)
+        try {
+            nm.notify(NOTIFICATION_ID + 1, notification)
+        } catch (_: Exception) {
+        }
     }
 
     private fun dismissOverlay() {

@@ -1,11 +1,14 @@
 package app.sakinalauncher.ui
 
+import android.Manifest
 import android.app.Activity
 import android.appwidget.AppWidgetManager
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.ComponentName
 import android.content.Context
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.text.InputType
 import android.view.GestureDetector
@@ -20,6 +23,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.widget.AppCompatEditText
+import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
@@ -76,6 +80,13 @@ class NotePanelFragment : Fragment() {
 
     private var _binding: FragmentNotePanelBinding? = null
     private val binding get() = _binding!!
+
+    // Android 13+ requires explicit POST_NOTIFICATIONS to show the foreground
+    // countdown notification. Request it the first time the user starts a timer
+    // (denial is fine — the timer still runs, just without the notification).
+    private val notificationPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) { /* granted or not — the timer service runs either way */ }
 
     private val pickWidgetLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult(),
@@ -205,6 +216,12 @@ class NotePanelFragment : Fragment() {
         noteDraft = savedInstanceState?.getString(KEY_NOTE_DRAFT).orEmpty()
         todoDraft = savedInstanceState?.getString(KEY_TODO_DRAFT).orEmpty()
         timerSession.restore()
+        // If a countdown survived process death, make sure the foreground
+        // service is running again so the timer keeps going when the panel
+        // closes (the service reads the persisted deadline).
+        if (timerSession.isRunning) {
+            TimerService.start(requireContext())
+        }
 
         applyPanelSize()
         initAdapter()
@@ -904,6 +921,15 @@ class NotePanelFragment : Fragment() {
 
     private fun startTimer() {
         timerSession.start()
+        // Android 13+: ask once for notification permission so the countdown
+        // notification is visible. Safe to call repeatedly; the system ignores
+        // it after the first decision.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.POST_NOTIFICATIONS)
+            != PackageManager.PERMISSION_GRANTED
+        ) {
+            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
         TimerService.start(requireContext())
         renderTimer()
     }

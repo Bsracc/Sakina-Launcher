@@ -22,6 +22,7 @@ import android.os.Bundle
 import android.provider.Settings
 import android.view.View
 import android.view.WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
+import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
@@ -32,6 +33,7 @@ import androidx.navigation.findNavController
 import app.sakinalauncher.data.Constants
 import app.sakinalauncher.data.Prefs
 import app.sakinalauncher.databinding.ActivityMainBinding
+import app.sakinalauncher.helper.AppDialog
 import app.sakinalauncher.helper.getColorFromAttr
 import app.sakinalauncher.helper.getScreenDimensions
 import app.sakinalauncher.helper.hasBeenDays
@@ -50,6 +52,7 @@ import app.sakinalauncher.helper.shareApp
 import app.sakinalauncher.helper.showLauncherSelector
 import app.sakinalauncher.helper.showToast
 import app.sakinalauncher.helper.SoundEffects
+import app.sakinalauncher.timer.TimerService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -148,6 +151,13 @@ class MainActivity : AppCompatActivity() {
         viewModel.getAppList()
         setupOrientation()
 
+        // The timer service brings the launcher forward (no overlay permission
+        // granted) and asks us to show the "time's up" dialog ourselves.
+        if (intent?.getBooleanExtra(TimerService.EXTRA_SHOW_TIMER_DONE, false) == true) {
+            intent.removeExtra(TimerService.EXTRA_SHOW_TIMER_DONE)
+            showTimerDoneFromService()
+        }
+
         window.addFlags(FLAG_LAYOUT_NO_LIMITS)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
@@ -200,6 +210,12 @@ class MainActivity : AppCompatActivity() {
         backToHomeScreen()
         if (alreadyHome && isResumed && prefs.homeButtonShowRecents)
             viewModel.showRecentApps.call()
+        // The timer service can deliver the "time's up" request to an already
+        // running launcher (singleTop): show the dialog here too.
+        if (intent?.getBooleanExtra(TimerService.EXTRA_SHOW_TIMER_DONE, false) == true) {
+            intent.removeExtra(TimerService.EXTRA_SHOW_TIMER_DONE)
+            showTimerDoneFromService()
+        }
         super.onNewIntent(intent)
     }
 
@@ -615,6 +631,31 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    /**
+     * The timer service brought the launcher forward because overlay permission
+     * is not granted. Show the same "time's up" dialog the Note Panel shows,
+     * with Add time / Close. Add time opens the duration dialog via the Note
+     * Panel; Close just dismisses (the timer is already reset in the service).
+     */
+    private fun showTimerDoneFromService() {
+        val view = layoutInflater.inflate(R.layout.dialog_timer_done, null)
+        view.findViewById<TextView>(R.id.dialogTitle).setText(R.string.timer_overlay_title)
+        view.findViewById<TextView>(R.id.dialogMessage).setText(R.string.timer_overlay_message)
+        val positive = view.findViewById<TextView>(R.id.dialogPositive)
+        val negative = view.findViewById<TextView>(R.id.dialogNegative)
+        positive.setText(R.string.timer_overlay_add)
+        negative.setText(R.string.timer_overlay_close)
+
+        val dialog = AppDialog.create(this, view, widthScale = prefs.productiveDialogWidthScale)
+        negative.setOnClickListener { dialog.dismiss() }
+        positive.setOnClickListener {
+            dialog.dismiss()
+            // Navigate to the Note Panel timer so the user can pick the new duration.
+            runCatching { navController.navigate(R.id.notePanelFragment) }
+        }
+        dialog.show()
     }
 
     private companion object {
