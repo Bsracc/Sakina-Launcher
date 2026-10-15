@@ -12,7 +12,9 @@ import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
 import android.os.SystemClock
+import android.view.ContextThemeWrapper
 import android.view.Gravity
+import android.view.LayoutInflater
 import android.view.WindowManager
 import android.widget.TextView
 import androidx.core.app.NotificationCompat
@@ -173,7 +175,12 @@ class TimerService : Service() {
             showFallbackActivity()
             return
         }
-        val view = android.view.LayoutInflater.from(this).inflate(R.layout.dialog_timer_done, null)
+        // CRITICAL: a Service context has no Activity theme, and this layout uses
+        // ?attr/primaryColor + ?attr/glassActive + styles. Inflating it with the
+        // bare service context throws Resources.NotFoundException -> crash when
+        // the timer finishes while another app is open. Wrap with the app theme.
+        val themed = ContextThemeWrapper(this, R.style.AppTheme)
+        val view = LayoutInflater.from(themed).inflate(R.layout.dialog_timer_done, null)
         view.findViewById<TextView>(R.id.dialogTitle).setText(R.string.timer_overlay_title)
         view.findViewById<TextView>(R.id.dialogMessage).setText(R.string.timer_overlay_message)
         val positive = view.findViewById<TextView>(R.id.dialogPositive)
