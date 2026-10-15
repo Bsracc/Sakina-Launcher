@@ -7,8 +7,6 @@ import android.content.ClipboardManager
 import android.content.ComponentName
 import android.content.Context
 import android.os.Bundle
-import android.os.CountDownTimer
-import android.os.SystemClock
 import android.text.InputType
 import android.view.GestureDetector
 import android.view.KeyEvent
@@ -41,10 +39,13 @@ import app.sakinalauncher.data.NotePanelRows
 import app.sakinalauncher.data.NotePanelStore
 import app.sakinalauncher.data.Prefs
 import app.sakinalauncher.data.ProductiveWidgetStore
+import app.sakinalauncher.data.TimerKeys
+import app.sakinalauncher.data.TimerSession
 import app.sakinalauncher.data.TodoItem
 import app.sakinalauncher.databinding.FragmentNotePanelBinding
 import app.sakinalauncher.helper.AppDialog
 import app.sakinalauncher.helper.ProductiveWidgetHostHelper
+import app.sakinalauncher.helper.SoundEffects
 import app.sakinalauncher.helper.applyGlassInk
 import app.sakinalauncher.helper.hideKeyboard
 import app.sakinalauncher.helper.launchSwipeApp
@@ -67,10 +68,7 @@ class NotePanelFragment : Fragment() {
     private var noteDraft: String = ""
     private var todoDraft: String = ""
     private var sourceDirection: String? = null
-    private var timer: CountDownTimer? = null
-    private var timerTotalMillis: Long = 0L
-    private var timerRemainingMillis: Long = 0L
-    private var timerRunning: Boolean = false
+    private lateinit var timerSession: TimerSession
     private var selectedNoteIds: MutableSet<String> = mutableSetOf()
     private var pendingWidgetId: Int = AppWidgetManager.INVALID_APPWIDGET_ID
     private val smoothInterpolator = PathInterpolator(0.2f, 0f, 0f, 1f)
@@ -183,6 +181,15 @@ class NotePanelFragment : Fragment() {
         widgetStore = ProductiveWidgetStore(requireContext())
         prefs = Prefs(requireContext())
         widgetHost = ProductiveWidgetHostHelper(requireContext(), widgetStore)
+        timerSession = TimerSession(prefs).apply {
+            listener = object : TimerSession.Listener {
+                override fun onTick(remainingMillis: Long) = renderTimer()
+                override fun onFinish() {
+                    renderTimer()
+                    showTimerDoneDialog()
+                }
+            }
+        }
         viewModel = activity?.run {
             ViewModelProvider(this)[MainViewModel::class.java]
         } ?: throw Exception("Invalid Activity")
@@ -193,7 +200,7 @@ class NotePanelFragment : Fragment() {
         mode = prefs.resolveProductiveOpenMode(requested)
         noteDraft = savedInstanceState?.getString(KEY_NOTE_DRAFT).orEmpty()
         todoDraft = savedInstanceState?.getString(KEY_TODO_DRAFT).orEmpty()
-        restoreTimerState(savedInstanceState)
+        timerSession.restore()
 
         applyPanelSize()
         initAdapter()
@@ -246,9 +253,7 @@ class NotePanelFragment : Fragment() {
         outState.putString(KEY_NOTE_DRAFT, noteDraft)
         outState.putString(KEY_TODO_DRAFT, todoDraft)
         outState.putString(KEY_SOURCE_DIRECTION, sourceDirection)
-        outState.putLong(KEY_TIMER_TOTAL, timerTotalMillis)
-        outState.putLong(KEY_TIMER_REMAINING, timerRemainingMillis)
-        outState.putBoolean(KEY_TIMER_RUNNING, timerRunning)
+        timerSession.snapshot(outState, TimerKeys())
         super.onSaveInstanceState(outState)
     }
 
@@ -894,71 +899,67 @@ class NotePanelFragment : Fragment() {
     }
 
     private fun startTimer() {
-        if (timerRemainingMillis <= 0L) {
-            timerTotalMillis = prefs.pomodoroFocusMillis
-            timerRemainingMillis = timerTotalMillis
-        }
-        timer?.cancel()
-        timerRunning = true
-        prefs.pomodoroTimerTotalMillis = timerTotalMillis
-        prefs.pomodoroTimerEndElapsedRealtime = SystemClock.elapsedRealtime() + timerRemainingMillis
-        prefs.pomodoroTimerRemainingMillis = timerRemainingMillis
-        timer = object : CountDownTimer(timerRemainingMillis, TIMER_TICK_MS) {
-            override fun onTick(millisUntilFinished: Long) {
-                timerRemainingMillis = millisUntilFinished
-                renderTimer()
-            }
-
-            override fun onFinish() {
-                timerRunning = false
-                timerRemainingMillis = 0L
-                prefs.pomodoroTimerRemainingMillis = 0L
-                prefs.pomodoroTimerEndElapsedRealtime = 0L
-                renderTimer()
-                requireContext().showToast(getString(R.string.timer))
-            }
-        }.start()
+        timerSession.start()
         renderTimer()
     }
 
     private fun togglePauseResume() {
-        if (timerRunning) {
-            timer?.cancel()
-            timerRunning = false
-            prefs.pomodoroTimerEndElapsedRealtime = 0L
-            prefs.pomodoroTimerRemainingMillis = timerRemainingMillis
+        if (timerSession.isRunning) {
+            timerSession.pause()
         } else {
-            startTimer()
-            return
+            timerSession.resume()
         }
         renderTimer()
     }
 
     private fun resetTimer() {
-        timer?.cancel()
-        timerRunning = false
-        timerTotalMillis = prefs.pomodoroFocusMillis
-        timerRemainingMillis = timerTotalMillis
-        prefs.pomodoroTimerTotalMillis = timerTotalMillis
-        prefs.pomodoroTimerRemainingMillis = timerRemainingMillis
-        prefs.pomodoroTimerEndElapsedRealtime = 0L
+        timerSession.reset()
         renderTimer()
+    }
+
+    private fun showTimerDoneDialog() {
+        if (_binding == null) return
+        val view = layoutInflater.inflate(R.layout.dialog_timer_done, null)
+        view.findViewById<TextView>(R.id.dialogTitle).setText(R.string.timer_done_title)
+        view.findViewById<TextView>(R.id.dialogMessage).setText(R.string.timer_done_message)
+        val positive = view.findViewById<TextView>(R.id.dialogPositive)
+        val negative = view.findViewById<TextView>(R.id.dialogNegative)
+        positive.setText(R.string.timer_add_time)
+        negative.setText(R.string.close)
+
+        val dialog = AppDialog.create(
+            requireContext(),
+            view,
+            widthScale = prefs.productiveDialogWidthScale,
+        )
+        // Gentle chime so the finished timer is noticeable even if the panel is not in view.
+        SoundEffects.mindfulDone(requireContext())
+        negative.setOnClickListener {
+            dialog.dismiss()
+            // Timer already reset in onFinish; nothing else to do.
+        }
+        positive.setOnClickListener {
+            dialog.dismiss()
+            showDurationDialog()
+        }
+        dialog.setOnDismissListener { timerSession.release() }
+        dialog.show()
     }
 
     private fun renderTimer() {
         if (_binding == null) return
-        val total = timerTotalMillis.coerceAtLeast(1L)
-        val completed = 1f - (timerRemainingMillis.toFloat() / total.toFloat())
+        val total = timerSession.totalMillis.coerceAtLeast(1L)
+        val completed = 1f - (timerSession.remainingMillis.toFloat() / total.toFloat())
         binding.timerProgress.progress = completed
-        binding.timerValue.text = formatTimer(timerRemainingMillis)
-        binding.timerStart.isVisible = timerRunning.not()
-        binding.timerControls.isVisible = timerRunning || timerRemainingMillis != timerTotalMillis
-        binding.timerPause.text = getString(if (timerRunning) R.string.pause else R.string.resume)
+        binding.timerValue.text = formatTimer(timerSession.remainingMillis)
+        binding.timerStart.isVisible = timerSession.isRunning.not()
+        binding.timerControls.isVisible = timerSession.isRunning || timerSession.remainingMillis != timerSession.totalMillis
+        binding.timerPause.text = getString(if (timerSession.isRunning) R.string.pause else R.string.resume)
     }
 
     private fun showDurationDialog() {
         val context = requireContext()
-        val currentSeconds = (timerRemainingMillis.coerceAtLeast(0L) + 999L) / 1000L
+        val currentSeconds = timerSession.remainingSeconds
         val minutesInput = AppCompatEditText(context).apply {
             inputType = InputType.TYPE_CLASS_NUMBER
             hint = getString(R.string.minutes)
@@ -1008,15 +1009,7 @@ class NotePanelFragment : Fragment() {
                 context.showToast(getString(R.string.timer_duration_empty))
                 return@setOnClickListener
             }
-            prefs.pomodoroFocusMinutes = minutes
-            prefs.pomodoroFocusSeconds = seconds
-            timer?.cancel()
-            timerRunning = false
-            timerTotalMillis = prefs.pomodoroFocusMillis
-            timerRemainingMillis = timerTotalMillis
-            prefs.pomodoroTimerTotalMillis = timerTotalMillis
-            prefs.pomodoroTimerRemainingMillis = timerRemainingMillis
-            prefs.pomodoroTimerEndElapsedRealtime = 0L
+            timerSession.setDuration(minutes, seconds)
             renderTimer()
             dialog.dismiss()
         }
@@ -1043,27 +1036,6 @@ class NotePanelFragment : Fragment() {
 
     private fun dp(value: Int): Int {
         return (value * resources.displayMetrics.density).toInt()
-    }
-
-    private fun restoreTimerState(savedInstanceState: Bundle?) {
-        timerTotalMillis = savedInstanceState?.getLong(KEY_TIMER_TOTAL, 0L)?.takeIf { it > 0L }
-            ?: prefs.pomodoroTimerTotalMillis
-        timerRemainingMillis = savedInstanceState?.getLong(KEY_TIMER_REMAINING, 0L)?.takeIf { it >= 0L }
-            ?: prefs.pomodoroTimerRemainingMillis
-        val savedRunning = savedInstanceState?.getBoolean(KEY_TIMER_RUNNING)
-        val endElapsed = prefs.pomodoroTimerEndElapsedRealtime
-        if (savedRunning == true || endElapsed > 0L) {
-            timerRemainingMillis = (endElapsed - SystemClock.elapsedRealtime()).coerceAtLeast(0L)
-            if (timerRemainingMillis > 0L) {
-                startTimer()
-            } else {
-                timerRunning = false
-                prefs.pomodoroTimerEndElapsedRealtime = 0L
-                prefs.pomodoroTimerRemainingMillis = 0L
-            }
-        }
-        if (timerTotalMillis <= 0L) timerTotalMillis = prefs.pomodoroFocusMillis
-        if (timerRemainingMillis < 0L) timerRemainingMillis = timerTotalMillis
     }
 
     private fun showEditDialog(
@@ -1113,9 +1085,9 @@ class NotePanelFragment : Fragment() {
     }
 
     override fun onStop() {
-        if (timerRunning.not()) {
-            prefs.pomodoroTimerRemainingMillis = timerRemainingMillis
-        }
+        // Persist a paused/idle session so it survives leaving the panel; a running
+        // timer keeps its end-time in prefs (set at start) and continues.
+        if (!timerSession.isRunning) timerSession.pause()
         binding.input.hideKeyboard()
         widgetHost?.stopListening()
         super.onStop()
@@ -1132,8 +1104,7 @@ class NotePanelFragment : Fragment() {
     }
 
     override fun onDestroyView() {
-        timer?.cancel()
-        timer = null
+        timerSession.release()
         clearSuppressHome()
         widgetHost?.destroy()
         widgetHost = null
@@ -1146,10 +1117,6 @@ class NotePanelFragment : Fragment() {
         private const val KEY_NOTE_DRAFT = "note_panel_note_draft"
         private const val KEY_TODO_DRAFT = "note_panel_todo_draft"
         private const val KEY_SOURCE_DIRECTION = "note_panel_source_direction"
-        private const val KEY_TIMER_TOTAL = "note_panel_timer_total"
-        private const val KEY_TIMER_REMAINING = "note_panel_timer_remaining"
-        private const val KEY_TIMER_RUNNING = "note_panel_timer_running"
-        private const val TIMER_TICK_MS = 250L
         private const val SWIPE_THRESHOLD = 100
         private const val SWIPE_VELOCITY_THRESHOLD = 100
     }

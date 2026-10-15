@@ -80,7 +80,7 @@ object SoundEffects {
         }
         if (!Prefs(ctx).soundEffectsEnabled) return
         if (!loaded) return
-        val volume = 0.65f
+        val volume = 0.5f
         p.play(soundId, volume, volume, 1, 0, 1.0f)
     }
 

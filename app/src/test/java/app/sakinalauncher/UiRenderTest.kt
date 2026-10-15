@@ -158,4 +158,29 @@ class UiRenderTest {
         root.findViewById<View>(R.id.settingsDim).visibility = View.GONE
         save("settings", root, 540, 1200)
     }
+
+    @Test
+    fun renderNoteComposer() {
+        val a = activity()
+        val root = LayoutInflater.from(a).inflate(R.layout.fragment_note_panel, null)
+        root.setBackgroundColor(Color.rgb(196, 189, 176))
+        val input = root.findViewById<androidx.appcompat.widget.AppCompatEditText>(R.id.input)
+        input.setText("Tambah catatan...")
+        // Reveal the composer row (LinearLayout containing input + send).
+        val composer = input.parent as ViewGroup
+        composer.visibility = View.VISIBLE
+        save("note_composer", composer, 540, 200)
+    }
+
+    @Test
+    fun renderTimerDoneDialog() {
+        val a = activity()
+        val root = LayoutInflater.from(a).inflate(R.layout.dialog_timer_done, null)
+        root.setBackgroundColor(Color.rgb(120, 116, 110))
+        findText(root, R.id.dialogTitle).text = "Time's up"
+        findText(root, R.id.dialogMessage).text = "Your timer has finished."
+        findText(root, R.id.dialogPositive).text = "Add time"
+        findText(root, R.id.dialogNegative).text = "Close"
+        save("timer_done_dialog", root, 540, 400)
+    }
 }

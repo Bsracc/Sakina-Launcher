@@ -129,6 +129,9 @@
     <string name="seconds">Detik</string>
     <string name="tap_timer_to_set_duration">Ketuk waktu untuk mengatur menit dan detik</string>
     <string name="timer_duration_empty">Timer minimal satu detik</string>
+    <string name="timer_done_title">Waktu habis</string>
+    <string name="timer_done_message">Timer kamu sudah selesai.</string>
+    <string name="timer_add_time">Tambah waktu</string>
     <string name="select_all">Semua</string>
     <string name="notes_section_pinned">Disematkan</string>
     <string name="todo_section_active">Aktif</string>

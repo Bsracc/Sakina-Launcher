@@ -173,6 +173,9 @@
     <string name="seconds">Seconds</string>
     <string name="tap_timer_to_set_duration">Tap time to set minutes and seconds</string>
     <string name="timer_duration_empty">Timer must be at least one second</string>
+    <string name="timer_done_title">Time\'s up</string>
+    <string name="timer_done_message">Your timer has finished.</string>
+    <string name="timer_add_time">Add time</string>
     <string name="select_all">All</string>
     <string name="notes_section_pinned">Pinned</string>
     <string name="todo_section_active">Active</string>
