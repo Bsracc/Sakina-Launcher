@@ -224,8 +224,6 @@
     <string name="mindful_launch">Peluncuran mindful</string>
     <string name="mindful_launch_summary">Beri jeda sebelum membuka aplikasi yang Anda tandai sebagai pengalih perhatian, agar Anda bisa berubah pikiran.</string>
     <string name="mindful_launch_master_toggle">Peluncuran mindful</string>
-    <string name="sound_effects_label">Efek suara</string>
-    <string name="sound_effects_summary">Klik dan chime lembut untuk peluncuran dan sakelar.</string>
     <string name="mindful_launch_delay">Lama hitung mundur</string>
     <string name="mindful_launch_delay_3">3 detik</string>
     <string name="mindful_launch_delay_4">4 detik</string>

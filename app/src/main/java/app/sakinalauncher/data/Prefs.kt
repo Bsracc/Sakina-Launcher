@@ -53,7 +53,6 @@ class Prefs(context: Context) {
     private val MINDFUL_APPS = "MINDFUL_APPS"
     private val MINDFUL_LAUNCH_ENABLED = "MINDFUL_LAUNCH_ENABLED"
     private val MINDFUL_DELAY_SECONDS = "MINDFUL_DELAY_SECONDS"
-    private val SOUND_EFFECTS_ENABLED = "SOUND_EFFECTS_ENABLED"
     private val DAILY_SCREEN_TIME_GOAL_MINUTES = "DAILY_SCREEN_TIME_GOAL_MINUTES"
     private val SCREEN_TIME_GOAL_REACHED_DAY = "SCREEN_TIME_GOAL_REACHED_DAY"
     private val SCREEN_TIME_GOAL_MISSED_DAY = "SCREEN_TIME_GOAL_MISSED_DAY"
@@ -304,9 +303,6 @@ class Prefs(context: Context) {
 
     /** Master toggle for mindful launch. Individual apps opt in via [mindfulApps]. */
     var mindfulLaunchEnabled: Boolean by boolPref(MINDFUL_LAUNCH_ENABLED, false)
-
-    /** Master toggle for launcher sound effects (launch pop, mindful chime, toggle tick). */
-    var soundEffectsEnabled: Boolean by boolPref(SOUND_EFFECTS_ENABLED, true)
 
     /** Countdown seconds before a mindful app opens (3–5). */
     var mindfulDelaySeconds: Int by intPref(MINDFUL_DELAY_SECONDS, 3)

@@ -24,7 +24,6 @@ import app.sakinalauncher.helper.SingleLiveEvent
 import app.sakinalauncher.helper.MindfulLaunchHelper
 import app.sakinalauncher.helper.ScreenTimeGoal
 import app.sakinalauncher.helper.ScreenTimeGoalWorker
-import app.sakinalauncher.helper.SoundEffects
 import app.sakinalauncher.helper.WallpaperWorker
 import app.sakinalauncher.helper.formattedTimeSpent
 import app.sakinalauncher.helper.getAppsList
@@ -469,9 +468,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
      * B1: launches the resolved component directly. Called by the UI layer after
      * the mindful countdown completes (with an Activity context on the dialog).
      */
-    fun launchComponent(component: ComponentName, userHandle: UserHandle, playLaunchSound: Boolean = true) {
+    fun launchComponent(component: ComponentName, userHandle: UserHandle) {
         val launcher = appContext.getSystemService(Context.LAUNCHER_APPS_SERVICE) as LauncherApps
-        if (playLaunchSound) SoundEffects.launch(appContext)
         try {
             launcher.startMainActivity(component, userHandle, null, null)
         } catch (e: SecurityException) {

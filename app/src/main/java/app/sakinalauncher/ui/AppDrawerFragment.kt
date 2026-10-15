@@ -34,7 +34,6 @@ import app.sakinalauncher.helper.openSearch
 import app.sakinalauncher.helper.openUrl
 import app.sakinalauncher.helper.showKeyboard
 import app.sakinalauncher.helper.showToast
-import app.sakinalauncher.helper.SoundEffects
 import app.sakinalauncher.helper.uninstall
 
 class AppDrawerFragment : Fragment() {
@@ -303,8 +302,7 @@ class AppDrawerFragment : Fragment() {
                 prefs,
                 request.appLabel,
                 onLaunch = {
-                    SoundEffects.mindfulDone(requireContext())
-                    viewModel.launchComponent(request.component, request.userHandle, playLaunchSound = false)
+                    viewModel.launchComponent(request.component, request.userHandle)
                 },
                 onCancel = {
                     requireContext().showToast(getString(R.string.mindful_launch_cancelled))

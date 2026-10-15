@@ -49,7 +49,6 @@ import app.sakinalauncher.data.TodoItem
 import app.sakinalauncher.databinding.FragmentNotePanelBinding
 import app.sakinalauncher.helper.AppDialog
 import app.sakinalauncher.helper.ProductiveWidgetHostHelper
-import app.sakinalauncher.helper.SoundEffects
 import app.sakinalauncher.helper.applyGlassInk
 import app.sakinalauncher.helper.hideKeyboard
 import app.sakinalauncher.helper.launchSwipeApp
@@ -966,8 +965,6 @@ class NotePanelFragment : Fragment() {
             view,
             matchHeight = true,
         )
-        // Gentle chime so the finished timer is noticeable even if the panel is not in view.
-        SoundEffects.mindfulDone(requireContext())
         negative.setOnClickListener {
             dialog.dismiss()
             // Timer already reset in onFinish; nothing else to do.

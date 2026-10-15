@@ -20,7 +20,6 @@ import android.widget.TextView
 import androidx.core.app.NotificationCompat
 import app.sakinalauncher.R
 import app.sakinalauncher.data.Prefs
-import app.sakinalauncher.helper.SoundEffects
 import app.sakinalauncher.MainActivity
 
 /**
@@ -151,8 +150,6 @@ class TimerService : Service() {
         // alive; if the panel was never alive in this process, zero it here.
         prefs.pomodoroTimerRemainingMillis = 0L
         prefs.pomodoroTimerEndElapsedRealtime = 0L
-
-        SoundEffects.mindfulDone(this)
 
         // Short grace window: if the Note Panel is open in the launcher, its own
         // dialog handles the "time's up" (fragment stops this service). Only show
