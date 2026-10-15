@@ -648,7 +648,8 @@ class MainActivity : AppCompatActivity() {
         positive.setText(R.string.timer_overlay_add)
         negative.setText(R.string.timer_overlay_close)
 
-        val dialog = AppDialog.create(this, view, widthScale = prefs.productiveDialogWidthScale)
+        // Full-screen modal — same signature as the overlay popup (scrim + card).
+        val dialog = AppDialog.create(this, view, matchHeight = true)
         negative.setOnClickListener { dialog.dismiss() }
         positive.setOnClickListener {
             dialog.dismiss()

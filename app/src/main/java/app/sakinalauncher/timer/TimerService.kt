@@ -188,18 +188,15 @@ class TimerService : Service() {
         positive.setText(R.string.timer_overlay_add)
         negative.setText(R.string.timer_overlay_close)
 
+        // Full-screen modal: the scrim (layout background) owns the screen and
+        // blocks touches outside the card until the user picks Add time / Close.
         val lp = WindowManager.LayoutParams(
-            // Match parent width but let the card size itself; the card has
-            // padding and gravity center, so it stays a centered sheet, not a
-            // full-screen block.
             WindowManager.LayoutParams.MATCH_PARENT,
-            WindowManager.LayoutParams.WRAP_CONTENT,
+            WindowManager.LayoutParams.MATCH_PARENT,
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-            // NOT_FOCUSABLE: don't steal keyboard focus. NOT_TOUCH_MODAL: touches
-            // outside the window pass through to the app behind (critical — the
-            // popup must not lock the whole screen).
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
-                WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
+            // NOT_FOCUSABLE so it never steals keyboard focus; touches anywhere
+            // are consumed by the modal (no NOT_TOUCH_MODAL = fully blocking).
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
             android.graphics.PixelFormat.TRANSLUCENT,
         ).apply {
             gravity = Gravity.CENTER

@@ -1,71 +1,102 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  Timer "time's up" modal — full-screen blocking popup.
+
+  Design language (PUSAT MUSLIM signature):
+   - Full-screen glass scrim: the popup owns the screen until dismissed.
+   - Ring icon: the mindful countdown ring motif, reused as the identity mark —
+     the single circular glyph that this launcher's timer moments share.
+   - One glass sheet card, centered, with generous radius + hairline (same
+     tokens as every other sheet in the app).
+   - Two actions, clear hierarchy: Add time = filled glassActive; Close = quiet
+     row. No decoration, no icon soup.
+-->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="match_parent"
+    android:background="@drawable/bg_glass_scrim">
 
     <LinearLayout
         android:id="@+id/dialogCard"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
+        android:layout_marginHorizontal="28dp"
         android:background="@drawable/bg_glass_sheet"
+        android:gravity="center_horizontal"
         android:orientation="vertical"
-        android:paddingHorizontal="22dp"
-        android:paddingTop="22dp"
-        android:paddingBottom="14dp">
+        android:paddingHorizontal="24dp"
+        android:paddingTop="30dp"
+        android:paddingBottom="22dp">
+
+        <!-- Identity mark: the countdown ring, small, quiet, present. -->
+        <TextView
+            android:id="@+id/dialogIcon"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:background="@drawable/bg_mindful_countdown_ring"
+            android:fontFamily="@font/poppins_semibold"
+            android:gravity="center"
+            android:text="@string/timer_done_icon"
+            android:textColor="?attr/primaryInverseColor"
+            android:textSize="28sp"
+            tools:ignore="UnusedAttribute" />
 
         <TextView
             android:id="@+id/dialogTitle"
             style="@style/TextLarge"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
             android:fontFamily="@font/poppins_semibold"
             android:letterSpacing="0.01"
             android:textColor="?attr/primaryColor"
-            android:textSize="22sp" />
+            android:textSize="24sp" />
 
         <TextView
             android:id="@+id/dialogMessage"
             style="@style/TextSmall"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:textColor="?attr/primaryColor"
+            android:layout_marginTop="8dp"
+            android:gravity="center"
+            android:maxWidth="280dp"
+            android:textColor="?attr/primaryColorTrans80"
             tools:ignore="UnusedAttribute" />
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="18dp"
-            android:gravity="end"
-            android:orientation="horizontal">
-
-            <TextView
-                android:id="@+id/dialogNegative"
-                style="@style/TextSmallBold"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@drawable/bg_selector_row"
-                android:foreground="?android:attr/selectableItemBackground"
-                android:gravity="center"
-                android:minWidth="84dp"
-                android:paddingHorizontal="18dp"
-                android:paddingVertical="12dp"
-                android:textColor="?attr/primaryColor" />
+            android:layout_marginTop="26dp"
+            android:gravity="center"
+            android:orientation="vertical">
 
             <TextView
                 android:id="@+id/dialogPositive"
                 style="@style/TextOnGlassActive"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="10dp"
                 android:background="@drawable/bg_note_segment_selected"
                 android:foreground="?android:attr/selectableItemBackground"
                 android:gravity="center"
-                android:minWidth="84dp"
+                android:minHeight="52dp"
                 android:paddingHorizontal="18dp"
-                android:paddingVertical="12dp" />
+                android:paddingVertical="14dp" />
+
+            <TextView
+                android:id="@+id/dialogNegative"
+                style="@style/TextSmallBold"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:background="@drawable/bg_selector_row"
+                android:foreground="?android:attr/selectableItemBackground"
+                android:gravity="center"
+                android:minHeight="48dp"
+                android:paddingHorizontal="18dp"
+                android:paddingVertical="12dp"
+                android:textColor="?attr/primaryColor" />
 
         </LinearLayout>
 

@@ -177,6 +177,7 @@
     <string name="timer_duration_empty">Timer must be at least one second</string>
     <string name="timer_done_title">Time\'s up</string>
     <string name="timer_done_message">Your timer has finished.</string>
+    <string name="timer_done_icon">!</string>
     <string name="timer_add_time">Add time</string>
     <string name="timer_notification_title">Focus timer</string>
     <string name="timer_notification_message">%1$s remaining</string>

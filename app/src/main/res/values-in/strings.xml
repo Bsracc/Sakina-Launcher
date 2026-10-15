@@ -133,6 +133,7 @@
     <string name="timer_duration_empty">Timer minimal satu detik</string>
     <string name="timer_done_title">Waktu habis</string>
     <string name="timer_done_message">Timer kamu sudah selesai.</string>
+    <string name="timer_done_icon">!</string>
     <string name="timer_add_time">Tambah waktu</string>
     <string name="timer_notification_title">Timer fokus</string>
     <string name="timer_notification_message">%1$s tersisa</string>

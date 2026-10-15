@@ -181,6 +181,6 @@ class UiRenderTest {
         findText(root, R.id.dialogMessage).text = "Your timer has finished."
         findText(root, R.id.dialogPositive).text = "Add time"
         findText(root, R.id.dialogNegative).text = "Close"
-        save("timer_done_dialog", root, 540, 400)
+        save("timer_done_dialog", root, 540, 1200)
     }
 }

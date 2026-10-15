@@ -964,7 +964,7 @@ class NotePanelFragment : Fragment() {
         val dialog = AppDialog.create(
             requireContext(),
             view,
-            widthScale = prefs.productiveDialogWidthScale,
+            matchHeight = true,
         )
         // Gentle chime so the finished timer is noticeable even if the panel is not in view.
         SoundEffects.mindfulDone(requireContext())
