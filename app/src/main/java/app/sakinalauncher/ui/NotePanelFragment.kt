@@ -53,6 +53,7 @@ import app.sakinalauncher.helper.showKeyboard
 import app.sakinalauncher.helper.showToast
 import app.sakinalauncher.helper.frostWallpaperWhileResumed
 import app.sakinalauncher.listener.OnSwipeTouchListener
+import app.sakinalauncher.timer.TimerService
 import java.util.Locale
 import kotlin.math.abs
 
@@ -186,6 +187,9 @@ class NotePanelFragment : Fragment() {
                 override fun onTick(remainingMillis: Long) = renderTimer()
                 override fun onFinish() {
                     renderTimer()
+                    // The panel is showing its own dialog — stop the service so
+                    // it doesn't also show the overlay popup.
+                    TimerService.stop(requireContext())
                     showTimerDoneDialog()
                 }
             }
@@ -900,20 +904,24 @@ class NotePanelFragment : Fragment() {
 
     private fun startTimer() {
         timerSession.start()
+        TimerService.start(requireContext())
         renderTimer()
     }
 
     private fun togglePauseResume() {
         if (timerSession.isRunning) {
             timerSession.pause()
+            TimerService.stop(requireContext())
         } else {
             timerSession.resume()
+            TimerService.start(requireContext())
         }
         renderTimer()
     }
 
     private fun resetTimer() {
         timerSession.reset()
+        TimerService.stop(requireContext())
         renderTimer()
     }
 
@@ -1010,6 +1018,8 @@ class NotePanelFragment : Fragment() {
                 return@setOnClickListener
             }
             timerSession.setDuration(minutes, seconds)
+            // A freshly-set duration isn't running — stop any foreground countdown.
+            TimerService.stop(requireContext())
             renderTimer()
             dialog.dismiss()
         }

@@ -8,6 +8,8 @@
     <string name="admin_permission_message">Sakinah Launcher berjanji untuk menggunakan izin layar kunci secara bertanggung jawab. Sakinah Launcher tidak mengumpulkan atau membagikan data apa pun.</string>
     <string name="off">Mati</string>
     <string name="on">Nyala</string>
+    <string name="overlay_permission_label">Popup timer di atas aplikasi lain</string>
+    <string name="overlay_already_enabled">Popup sudah diizinkan</string>
     <string name="change_default_launcher">Ubah peluncur default</string>
     <string name="share_now">Bagikan sekarang</string>
     <string name="rate_now">Berikan peringkat sekarang</string>
@@ -132,6 +134,12 @@
     <string name="timer_done_title">Waktu habis</string>
     <string name="timer_done_message">Timer kamu sudah selesai.</string>
     <string name="timer_add_time">Tambah waktu</string>
+    <string name="timer_notification_title">Timer fokus</string>
+    <string name="timer_notification_message">%1$s tersisa</string>
+    <string name="timer_overlay_title">Waktu habis</string>
+    <string name="timer_overlay_message">Timer fokus kamu sudah selesai.</string>
+    <string name="timer_overlay_add">Tambah waktu</string>
+    <string name="timer_overlay_close">Tutup</string>
     <string name="select_all">Semua</string>
     <string name="notes_section_pinned">Disematkan</string>
     <string name="todo_section_active">Aktif</string>

@@ -26,6 +26,8 @@
     <string name="admin_permission_message">Sakinah Launcher promises to use the accessibility permission responsibly. Sakinah Launcher does not collect or share any data.</string>
     <string name="off">Off</string>
     <string name="on">On</string>
+    <string name="overlay_permission_label">Timer popup over other apps</string>
+    <string name="overlay_already_enabled">Popup already allowed</string>
     <string name="change_default_launcher">Change default launcher</string>
     <string name="share_now">Share now</string>
     <string name="rate_now">Rate now</string>
@@ -176,6 +178,12 @@
     <string name="timer_done_title">Time\'s up</string>
     <string name="timer_done_message">Your timer has finished.</string>
     <string name="timer_add_time">Add time</string>
+    <string name="timer_notification_title">Focus timer</string>
+    <string name="timer_notification_message">%1$s remaining</string>
+    <string name="timer_overlay_title">Time\'s up</string>
+    <string name="timer_overlay_message">Your focus timer has finished.</string>
+    <string name="timer_overlay_add">Add time</string>
+    <string name="timer_overlay_close">Close</string>
     <string name="select_all">All</string>
     <string name="notes_section_pinned">Pinned</string>
     <string name="todo_section_active">Active</string>

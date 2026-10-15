@@ -139,6 +139,7 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
         populateScreenTimeOnOff()
         populateMindfulSettings()
         populateSoundEffectsToggle()
+        populateOverlayPermission()
         populateScreenTimeGoal()
         populateLockSettings()
         populateHomeButtonRecents()
@@ -220,6 +221,7 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
             R.id.screenTimeOnOff -> viewModel.showDialog.postValue(Constants.Dialog.DIGITAL_WELLBEING)
             R.id.mindfulLaunchToggle -> toggleMindfulLaunch()
             R.id.soundEffectsToggle -> toggleSoundEffects()
+            R.id.overlayPermissionValue -> openOverlayPermission()
             R.id.mindfulLaunchDelay -> showMindfulDelayPicker()
             R.id.mindfulAppsValue -> showMindfulAppsPicker()
             R.id.screenTimeGoalValue -> showScreenTimeGoalPicker()
@@ -348,6 +350,7 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
         binding.screenTimeOnOff.setOnClickListener(this)
         binding.mindfulLaunchToggle.setOnClickListener(this)
         binding.soundEffectsToggle.setOnClickListener(this)
+        binding.overlayPermissionValue.setOnClickListener(this)
         binding.mindfulLaunchDelay.setOnClickListener(this)
         binding.mindfulAppsValue.setOnClickListener(this)
         binding.screenTimeGoalValue.setOnClickListener(this)
@@ -872,6 +875,29 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
         binding.soundEffectsToggle.text = onOff(prefs.soundEffectsEnabled)
     }
 
+    private fun populateOverlayPermission() {
+        binding.overlayPermissionValue.text = onOff(
+            Settings.canDrawOverlays(requireContext())
+        )
+    }
+
+    private fun openOverlayPermission() {
+        if (Settings.canDrawOverlays(requireContext())) {
+            requireContext().showToast(R.string.overlay_already_enabled)
+            return
+        }
+        try {
+            val intent = Intent(
+                Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                Uri.parse("package:${requireContext().packageName}"),
+            )
+            startActivity(intent)
+        } catch (_: Exception) {
+            // Some OEMs lack the deep link; open the generic list.
+            startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION))
+        }
+    }
+
     private fun toggleSoundEffects() {
         val newState = !prefs.soundEffectsEnabled
         prefs.soundEffectsEnabled = newState
@@ -1007,6 +1033,9 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
         if (_binding != null) {
             populateMindfulSettings()
             populateSoundEffectsToggle()
+            // Overlay permission may have been granted while Settings was paused
+            // (user toggled it in the system panel) — refresh the value.
+            populateOverlayPermission()
         }
     }
 
