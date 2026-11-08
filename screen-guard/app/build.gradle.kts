@@ -34,6 +34,10 @@ android {
         jvmTarget = "17"
     }
 
+    androidResources {
+        noCompress += "tflite"
+    }
+
     packaging {
         resources.excludes += setOf(
             "META-INF/AL2.0",
